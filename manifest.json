@@ -2,12 +2,12 @@
   "name": "VtM Hunger Dice",
   "version": "1.0.0",
   "manifest_version": 1,
-  "author": "Your Name",
+  "author": "Liavre",
   "description": "VtM dice pool roller with regular + hunger dice, synced roll log, and automatic success/crit/messy crit detection.",
   "action": {
     "title": "VtM Dice",
-    "icon": "/icon.svg",
-    "popover": "/index.html",
+    "icon": "icon.svg",
+    "popover": "index.html",
     "height": 640,
     "width": 380
   }
