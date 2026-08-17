@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>VtM Hunger Dice</title>
+<title>VtM Toolkit</title>
 <style>
   :root {
     --bg: #17171a;
@@ -11,186 +11,209 @@
     --text: #eee;
     --muted: #9a9aa2;
     --border: #33333a;
+    --health: #a5192b;
+    --willpower: #4d6fc2;
+    --hunger: #c0392b;
+    --humanity: #c99a3c;
   }
   * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
   body {
-    margin: 0;
     background: var(--bg);
     color: var(--text);
     font-family: "Segoe UI", Roboto, Arial, sans-serif;
-    font-size: 14px;
+    font-size: 13.5px;
   }
   #app { display: flex; flex-direction: column; height: 100vh; }
 
-  .controls {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--border);
-    background: var(--panel);
-    flex-shrink: 0;
+  /* ---------- shared ---------- */
+  .empty-state { color: var(--muted); text-align: center; padding: 16px; font-size: 12px; }
+  .section-heading {
+    flex-shrink: 0; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 6px 12px 4px; background: var(--bg);
   }
-  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .scroll-section { flex: 1 1 0; min-height: 50px; overflow-y: auto; padding: 4px 12px 8px; }
+
+  /* ---------- resizer ---------- */
+  .resizer {
+    height: 7px; flex-shrink: 0; cursor: row-resize; background: var(--border);
+    position: relative; touch-action: none;
+  }
+  .resizer::after {
+    content: ""; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 32px; height: 3px; border-radius: 2px; background: #55555f;
+  }
+  .resizer:hover, .resizer.dragging { background: #3a3a42; }
+  .resizer:hover::after, .resizer.dragging::after { background: #7a7a86; }
+
+  /* ---------- dice panel ---------- */
+  .dice-panel { display: flex; flex-direction: column; flex: 0 0 auto; min-height: 140px; border-bottom: none; }
+  .controls { padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
   .row:last-child { margin-bottom: 0; }
-  label { width: 90px; color: var(--muted); font-size: 12px; }
+  .row label { width: 60px; color: var(--muted); font-size: 12px; }
   .stepper { display: flex; align-items: center; gap: 4px; flex: 1; }
   .stepper button {
-    width: 26px; height: 26px; border-radius: 4px; border: 1px solid var(--border);
-    background: #2a2a30; color: var(--text); cursor: pointer; font-size: 14px; line-height: 1;
+    width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border);
+    background: #2a2a30; color: var(--text); cursor: pointer; font-size: 13px; line-height: 1;
   }
   .stepper button:hover { background: #35353c; }
   .stepper input[type=number] {
-    width: 44px; text-align: center; background: #141416; color: var(--text);
-    border: 1px solid var(--border); border-radius: 4px; padding: 4px 2px;
+    width: 40px; text-align: center; background: #141416; color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px; padding: 3px 2px;
   }
-  input[type=color] {
-    width: 26px; height: 26px; border: none; border-radius: 4px; padding: 0; background: none; cursor: pointer;
-  }
-  .swatch-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
-
+  input[type=color] { width: 24px; height: 24px; border: none; border-radius: 4px; padding: 0; background: none; cursor: pointer; }
+  .swatch-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; }
   .roll-btn {
-    width: 100%; padding: 10px; margin-top: 4px; border-radius: 6px; border: none;
+    width: 100%; padding: 8px; margin-top: 4px; border-radius: 6px; border: none;
     background: linear-gradient(180deg, #7a1020, #5a0c18); color: #fff; font-weight: 600;
-    letter-spacing: 0.5px; cursor: pointer; font-size: 14px;
+    letter-spacing: 0.5px; cursor: pointer; font-size: 13px;
   }
   .roll-btn:hover { filter: brightness(1.1); }
-  .roll-btn:active { filter: brightness(0.9); }
-  .roll-btn:disabled { opacity: 0.5; cursor: default; }
-
-  .hint { color: var(--muted); font-size: 11px; margin-top: 6px; }
-
-  #log {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 8px;
-  }
-  .entry {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 10px;
-  }
-  .entry-header {
-    display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
-  }
+  #diceLog { flex: 1 1 0; min-height: 40px; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column-reverse; gap: 8px; }
+  .entry { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+  .entry-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
   .entry-player { font-weight: 600; }
   .entry-time { color: var(--muted); font-size: 11px; }
   .entry-body { display: flex; align-items: stretch; gap: 10px; }
   .dice-row { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 5px; flex: 1; }
-
-  .tally-box {
-    flex-shrink: 0; width: 58px; border-radius: 8px; border: 2px solid var(--border);
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    padding: 4px 2px;
-  }
-  .tally-number { font-size: 24px; font-weight: 800; line-height: 1; color: var(--text); }
-  .tally-tag {
-    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
-    text-align: center; line-height: 1.15;
-  }
-  .tally-box.crit { border-color: #f2c14e; }
-  .tally-box.crit .tally-number, .tally-box.crit .tally-tag { color: #f2c14e; }
-  .tally-box.messy { border-color: #f2895f; }
-  .tally-box.messy .tally-number, .tally-box.messy .tally-tag { color: #f2895f; }
-  .tally-box.bestial { border-color: #e35b5b; }
-  .tally-box.bestial .tally-number, .tally-box.bestial .tally-tag { color: #e35b5b; }
-
   .die {
-    width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 13px; color: #fff; border: 1px solid rgba(255,255,255,0.15);
-    position: relative;
+    width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 12px; color: #fff; border: 1px solid rgba(255,255,255,0.15); position: relative;
   }
-  /* individual success die (6-9 or an unpaired 10) */
   .die.success { box-shadow: 0 0 0 2px #3fae5c; }
-  /* paired 10s = critical */
   .die.crit { box-shadow: 0 0 0 2px #f2c14e; }
-  /* hunger die showing a 1 - styled as a "dead" die: dark outline, dark number */
   .die.hungerone { box-shadow: 0 0 0 2px #000000; color: #000000; }
-  /* both a hunger-1 AND part of a crit pair (rare but possible visually stack) */
   .die.crit.hungerone { box-shadow: 0 0 0 2px #f2c14e, 0 0 0 4px #000000; }
-
   .die.selectable { cursor: pointer; }
   .die.selectable:hover { filter: brightness(1.25); }
   .die.selected { outline: 2px solid #4da6ff; outline-offset: 1px; }
-
-  @keyframes diceIn {
-    0% { transform: scale(0.3) rotate(-20deg); opacity: 0; }
-    60% { transform: scale(1.1) rotate(6deg); opacity: 1; }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
+  @keyframes diceIn { 0% { transform: scale(0.3) rotate(-20deg); opacity: 0; } 60% { transform: scale(1.1) rotate(6deg); opacity: 1; } 100% { transform: scale(1) rotate(0deg); opacity: 1; } }
   .die.die-animate { animation: diceIn 0.32s cubic-bezier(.34,1.56,.64,1) both; }
-
+  .tally-box {
+    flex-shrink: 0; width: 52px; border-radius: 8px; border: 2px solid var(--border);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 4px 2px;
+  }
+  .tally-number { font-size: 21px; font-weight: 800; line-height: 1; color: var(--text); }
+  .tally-tag { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; text-align: center; line-height: 1.15; }
+  .tally-box.crit { border-color: #f2c14e; } .tally-box.crit .tally-number, .tally-box.crit .tally-tag { color: #f2c14e; }
+  .tally-box.messy { border-color: #f2895f; } .tally-box.messy .tally-number, .tally-box.messy .tally-tag { color: #f2895f; }
+  .tally-box.bestial { border-color: #e35b5b; } .tally-box.bestial .tally-number, .tally-box.bestial .tally-tag { color: #e35b5b; }
   .reroll-bar { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-  .reroll-btn {
-    padding: 5px 10px; border-radius: 6px; border: 1px solid #4da6ff; background: rgba(77,166,255,0.12);
-    color: #bfe0ff; font-size: 11.5px; font-weight: 600; cursor: pointer;
-  }
-  .reroll-btn:hover { background: rgba(77,166,255,0.22); }
-  .reroll-hint { color: var(--muted); font-size: 11px; }
-
-  .empty-state { color: var(--muted); text-align: center; margin-top: 30px; font-size: 12.5px; }
-  .log-toolbar {
-    display: flex; justify-content: flex-end; padding: 4px 12px; border-top: 1px solid var(--border);
-    background: var(--panel); flex-shrink: 0;
-  }
-  .log-toolbar button {
-    background: none; border: none; color: var(--muted); font-size: 11px; cursor: pointer; padding: 4px;
-  }
+  .reroll-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid #4da6ff; background: rgba(77,166,255,0.12); color: #bfe0ff; font-size: 11px; font-weight: 600; cursor: pointer; }
+  .reroll-hint { color: var(--muted); font-size: 10.5px; }
+  .log-toolbar { display: flex; justify-content: flex-end; padding: 3px 12px; border-top: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
+  .log-toolbar button { background: none; border: none; color: var(--muted); font-size: 10.5px; cursor: pointer; padding: 3px; }
   .log-toolbar button:hover { color: #f29b9b; }
+
+  /* ---------- tracker panel ---------- */
+  .tracker-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 120px; }
+  .add-npc-bar { flex-shrink: 0; display: flex; gap: 6px; padding: 6px 12px; }
+  .add-npc-bar input[type=text] { flex: 1; background: #141416; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12.5px; }
+  .add-npc-bar button { background: #2a2a30; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .add-npc-bar button:hover { background: #35353c; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; margin-bottom: 8px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .card-header.has-body { margin-bottom: 7px; }
+  .header-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .chevron { color: var(--muted); font-size: 10px; flex-shrink: 0; }
+  .player-name { font-weight: 700; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .npc-name-input { font-weight: 700; font-size: 13.5px; background: none; border: none; color: var(--text); border-bottom: 1px dashed var(--border); padding: 0 0 1px; max-width: 150px; }
+  .role-badge { font-size: 9px; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 1px 6px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
+  .header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+  .icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 5px; width: 21px; height: 21px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; cursor: pointer; padding: 0; }
+  .icon-btn:hover { color: var(--text); border-color: #55555f; }
+  .icon-btn.active { color: #f2b18f; border-color: #a5192b; }
+  .collapsed-summary { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .track-toggles { display: flex; gap: 8px; margin-bottom: 7px; flex-wrap: wrap; }
+  .track-toggles label { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: 10.5px; cursor: pointer; }
+  .track-row { margin-bottom: 7px; }
+  .track-row:last-child { margin-bottom: 0; }
+  .track-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+  .track-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .track-count { color: var(--muted); font-size: 10.5px; }
+  .max-input { width: 30px; background: #141416; color: var(--text); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 10.5px; padding: 1px 2px; margin-left: 4px; }
+  .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
+  .box { width: 19px; height: 19px; border-radius: 4px; border: 1.5px solid var(--border); background: #141416; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; color: transparent; flex-shrink: 0; }
+  .box.editable { cursor: pointer; }
+  .box.editable:hover { filter: brightness(1.3); border-color: #55555f; }
+  .box.health-superficial { background: #5a2016; border-color: var(--health); color: #f2b18f; }
+  .box.health-aggravated { background: var(--health); border-color: var(--health); color: #fff; }
+  .box.wp-superficial { background: #1c2c4d; border-color: var(--willpower); color: #b6c8f2; }
+  .box.wp-aggravated { background: var(--willpower); border-color: var(--willpower); color: #fff; }
+  .box.hunger-filled { background: var(--hunger); border-color: var(--hunger); }
+  .box.humanity-filled { background: var(--humanity); border-color: var(--humanity); }
+  .box.humanity-stain { background: #141416; border-color: var(--humanity); position: relative; }
+  .box.humanity-stain::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--humanity); }
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="controls">
-    <div class="row">
-      <label for="poolInput">Pool</label>
-      <div class="stepper">
-        <button id="poolMinus">−</button>
-        <input id="poolInput" type="number" min="1" max="20" value="5" />
-        <button id="poolPlus">+</button>
+  <div class="dice-panel" id="dicePanel">
+    <div class="controls">
+      <div class="row">
+        <label for="poolInput">Pool</label>
+        <div class="stepper">
+          <button id="poolMinus">−</button>
+          <input id="poolInput" type="number" min="1" max="20" value="5" />
+          <button id="poolPlus">+</button>
+        </div>
+        <span class="swatch-label"><input id="poolColor" type="color" value="#2b2b2f" />pool</span>
       </div>
-      <span class="swatch-label"><input id="poolColor" type="color" value="#2b2b2f" />pool</span>
-    </div>
-    <div class="row">
-      <label for="hungerInput">Hunger</label>
-      <div class="stepper">
-        <button id="hungerMinus">−</button>
-        <input id="hungerInput" type="number" min="0" max="5" value="1" />
-        <button id="hungerPlus">+</button>
+      <div class="row">
+        <label for="hungerInput">Hunger</label>
+        <div class="stepper">
+          <button id="hungerMinus">−</button>
+          <input id="hungerInput" type="number" min="0" max="5" value="1" />
+          <button id="hungerPlus">+</button>
+        </div>
+        <span class="swatch-label"><input id="hungerColor" type="color" value="#a5192b" />hunger</span>
       </div>
-      <span class="swatch-label"><input id="hungerColor" type="color" value="#a5192b" />hunger</span>
+      <button class="roll-btn" id="rollBtn">ROLL POOL</button>
     </div>
-    <button class="roll-btn" id="rollBtn">ROLL POOL</button>
-    <div class="hint" id="hint">Hunger dice count toward your pool total (they replace regular dice, they don't add to it). Click dice on your latest roll to select them for a Willpower reroll.</div>
+    <div id="diceLog"><div class="empty-state" id="diceEmptyState">No rolls yet.</div></div>
+    <div class="log-toolbar"><button id="clearLog">Clear log</button></div>
   </div>
 
-  <div id="log">
-    <div class="empty-state" id="emptyState">No rolls yet. Set your pool and hunger, then roll.</div>
-  </div>
+  <div class="resizer" id="resizerMain"></div>
 
-  <div class="log-toolbar">
-    <button id="clearLog">Clear log</button>
-  </div>
+  <div class="tracker-panel" id="trackerPanel"></div>
 </div>
 
 <script type="module">
 import OBR from "https://esm.sh/@owlbear-rodeo/sdk@2";
 
-const EXT_ID = "com.vtm-hunger-dice";
-const META_KEY = `${EXT_ID}/log`;
+const EXT_ID = "com.vtm-toolkit";
+const DICE_LOG_KEY = `${EXT_ID}/dicelog`;
+const PLAYERS_KEY = `${EXT_ID}/players`;
+const NPCS_KEY = `${EXT_ID}/npcs`;
 const MAX_LOG_ENTRIES = 150;
+
+const HEALTH_DEFAULT_MAX = 7;
+const WILLPOWER_DEFAULT_MAX = 5;
+const HUNGER_DEFAULT_MAX = 5;
+const HUMANITY_DEFAULT_MAX = 10;
+const HUMANITY_DEFAULT_FILLED = 7;
+
+let obrReady = false;
+let currentPlayerId = null;
+let currentPlayerName = "You";
+let currentPlayerColor = "#888888";
+let currentRole = "PLAYER";
+let roster = [];
+
+/* ============================= DICE ROLLER ============================= */
 
 const poolInput = document.getElementById("poolInput");
 const hungerInput = document.getElementById("hungerInput");
 const poolColorInput = document.getElementById("poolColor");
 const hungerColorInput = document.getElementById("hungerColor");
 const rollBtn = document.getElementById("rollBtn");
-const logEl = document.getElementById("log");
-const emptyState = document.getElementById("emptyState");
+const diceLogEl = document.getElementById("diceLog");
+const diceEmptyState = document.getElementById("diceEmptyState");
 const clearLogBtn = document.getElementById("clearLog");
 
-// --- persisted local prefs (pool size, hunger size, colors) ---
 function loadPrefs() {
   try {
     const raw = localStorage.getItem(`${EXT_ID}/prefs`);
@@ -205,33 +228,28 @@ function loadPrefs() {
 }
 function savePrefs() {
   localStorage.setItem(`${EXT_ID}/prefs`, JSON.stringify({
-    pool: poolInput.value,
-    hunger: hungerInput.value,
-    poolColor: poolColorInput.value,
-    hungerColor: hungerColorInput.value,
+    pool: poolInput.value, hunger: hungerInput.value,
+    poolColor: poolColorInput.value, hungerColor: hungerColorInput.value,
   }));
 }
 loadPrefs();
 
-function clampInputs() {
+function clampDiceInputs() {
   let pool = Math.max(1, Math.min(20, parseInt(poolInput.value) || 1));
   let hunger = Math.max(0, Math.min(5, parseInt(hungerInput.value) || 0));
   if (hunger > pool) hunger = pool;
-  poolInput.value = pool;
-  hungerInput.value = hunger;
+  poolInput.value = pool; hungerInput.value = hunger;
   savePrefs();
 }
+document.getElementById("poolMinus").onclick = () => { poolInput.value = Math.max(1, (parseInt(poolInput.value)||1) - 1); clampDiceInputs(); };
+document.getElementById("poolPlus").onclick = () => { poolInput.value = Math.min(20, (parseInt(poolInput.value)||1) + 1); clampDiceInputs(); };
+document.getElementById("hungerMinus").onclick = () => { hungerInput.value = Math.max(0, (parseInt(hungerInput.value)||0) - 1); clampDiceInputs(); };
+document.getElementById("hungerPlus").onclick = () => { hungerInput.value = Math.min(5, (parseInt(hungerInput.value)||0) + 1); clampDiceInputs(); };
+poolInput.onchange = clampDiceInputs;
+hungerInput.onchange = clampDiceInputs;
+poolColorInput.onchange = () => { savePrefs(); renderDiceLog(); };
+hungerColorInput.onchange = () => { savePrefs(); renderDiceLog(); };
 
-document.getElementById("poolMinus").onclick = () => { poolInput.value = Math.max(1, (parseInt(poolInput.value)||1) - 1); clampInputs(); };
-document.getElementById("poolPlus").onclick = () => { poolInput.value = Math.min(20, (parseInt(poolInput.value)||1) + 1); clampInputs(); };
-document.getElementById("hungerMinus").onclick = () => { hungerInput.value = Math.max(0, (parseInt(hungerInput.value)||0) - 1); clampInputs(); };
-document.getElementById("hungerPlus").onclick = () => { hungerInput.value = Math.min(5, (parseInt(hungerInput.value)||0) + 1); clampInputs(); };
-poolInput.onchange = clampInputs;
-hungerInput.onchange = clampInputs;
-poolColorInput.onchange = () => { savePrefs(); render(currentLog); };
-hungerColorInput.onchange = () => { savePrefs(); render(currentLog); };
-
-// --- VtM V5 roll evaluation ---
 function rollD10() { return Math.floor(Math.random() * 10) + 1; }
 
 function evaluateRoll(poolDice, hungerDice) {
@@ -240,177 +258,116 @@ function evaluateRoll(poolDice, hungerDice) {
   const pairs = Math.floor(tens / 2);
   const nonTenHits = all.filter(d => d >= 6 && d <= 9).length;
   const successes = nonTenHits + tens + pairs * 2;
-
   const hungerTens = hungerDice.filter(d => d === 10).length;
   const isCritPair = pairs > 0;
   const isMessy = isCritPair && hungerTens > 0;
   const hasHungerOne = hungerDice.some(d => d === 1);
 
-  // Only Messy Critical and Bestial Failure carry a narrative complication worth
-  // calling out explicitly — plain crits/successes/failures are already visible
-  // from the die colors alone, so no tag for those.
   let outcome = null, outcomeClass = null;
-  if (successes === 0 && hasHungerOne) {
-    outcome = "Bestial Failure";
-    outcomeClass = "bestial";
-  } else if (isMessy) {
-    outcome = "Messy Critical";
-    outcomeClass = "messy";
-  }
+  if (successes === 0 && hasHungerOne) { outcome = "Bestial Failure"; outcomeClass = "bestial"; }
+  else if (isMessy) { outcome = "Messy Critical"; outcomeClass = "messy"; }
 
   return { successes, pairs, outcome, outcomeClass, hasHungerOne };
 }
 
-// --- rolling ---
 async function doRoll() {
-  clampInputs();
+  clampDiceInputs();
   const pool = parseInt(poolInput.value);
   const hunger = parseInt(hungerInput.value);
   const regularCount = pool - hunger;
-
   const poolDice = Array.from({ length: regularCount }, rollD10);
   const hungerDice = Array.from({ length: hunger }, rollD10);
   const evalResult = evaluateRoll(poolDice, hungerDice);
 
   const entry = {
     id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    playerId: currentPlayerId,
-    playerName: currentPlayerName,
-    playerColor: currentPlayerColor,
-    poolDice,
-    hungerDice,
-    poolColorHex: poolColorInput.value,
-    hungerColorHex: hungerColorInput.value,
-    timestamp: Date.now(),
-    ...evalResult,
+    playerId: currentPlayerId, playerName: currentPlayerName, playerColor: currentPlayerColor,
+    poolDice, hungerDice,
+    poolColorHex: poolColorInput.value, hungerColorHex: hungerColorInput.value,
+    timestamp: Date.now(), ...evalResult,
   };
-
-  await pushEntry(entry);
+  await pushDiceEntry(entry);
 }
-
 rollBtn.onclick = doRoll;
 
-// --- log storage (room metadata = shared + persistent) ---
-let currentLog = [];
-let obrReady = false;
-let currentPlayerId = null;
-let currentPlayerName = "You";
-let currentPlayerColor = "#888888";
+let diceLog = [];
+let diceActiveEntryId = null;
+let diceSelectedKeys = new Set();
+const diceSeenIds = new Set();
+const diceForceAnimateIds = new Set();
 
-// dice selected for a Willpower reroll, scoped to whichever entry id is "active" (the newest)
-let selectedKeys = new Set();
-let activeEntryId = null;
-
-// entry ids we've already rendered once, so we don't replay the pop-in animation forever
-const seenEntryIds = new Set();
-const forceAnimateIds = new Set();
-
-async function persistLog(next) {
-  currentLog = next;
-  if (obrReady) {
-    try {
-      await OBR.room.setMetadata({ [META_KEY]: next });
-    } catch (e) {
-      console.error("Failed to save roll to room metadata", e);
-    }
-  } else {
-    localStorage.setItem(`${EXT_ID}/local-log`, JSON.stringify(next));
-  }
+async function persistDiceLog(next) {
+  diceLog = next;
+  if (obrReady) { try { await OBR.room.setMetadata({ [DICE_LOG_KEY]: next }); } catch (e) { console.error(e); } }
+  else localStorage.setItem(`${EXT_ID}/local-dicelog`, JSON.stringify(next));
 }
-
-async function pushEntry(entry) {
-  const next = [entry, ...currentLog].slice(0, MAX_LOG_ENTRIES);
-  activeEntryId = entry.id;
-  selectedKeys = new Set();
-  forceAnimateIds.add(entry.id);
-  await persistLog(next);
-  render(currentLog);
+async function pushDiceEntry(entry) {
+  const next = [entry, ...diceLog].slice(0, MAX_LOG_ENTRIES);
+  diceActiveEntryId = entry.id;
+  diceSelectedKeys = new Set();
+  diceForceAnimateIds.add(entry.id);
+  await persistDiceLog(next);
+  renderDiceLog();
 }
-
-async function updateEntry(updatedEntry) {
-  const next = currentLog.map(e => e.id === updatedEntry.id ? updatedEntry : e);
-  forceAnimateIds.add(updatedEntry.id);
-  await persistLog(next);
-  render(currentLog);
+async function updateDiceEntry(updated) {
+  const next = diceLog.map(e => e.id === updated.id ? updated : e);
+  diceForceAnimateIds.add(updated.id);
+  await persistDiceLog(next);
+  renderDiceLog();
 }
-
 clearLogBtn.onclick = async () => {
-  seenEntryIds.clear();
-  forceAnimateIds.clear();
-  selectedKeys = new Set();
-  activeEntryId = null;
-  await persistLog([]);
-  render(currentLog);
+  diceSeenIds.clear(); diceForceAnimateIds.clear(); diceSelectedKeys = new Set(); diceActiveEntryId = null;
+  await persistDiceLog([]);
+  renderDiceLog();
 };
-
-function timeString(ts) {
-  const d = new Date(ts);
-  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-}
-
+function timeString(ts) { return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
 function dieKey(kind, idx) { return `${kind}-${idx}`; }
+function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str ?? ""; return d.innerHTML; }
 
-function render(log) {
-  logEl.querySelectorAll(".entry").forEach(el => el.remove());
-  emptyState.style.display = log.length === 0 ? "block" : "none";
+function renderDiceLog() {
+  diceLogEl.querySelectorAll(".entry").forEach(el => el.remove());
+  diceEmptyState.style.display = diceLog.length === 0 ? "block" : "none";
 
-  const topEntryId = log[0]?.id ?? null;
-  if (topEntryId !== activeEntryId) {
-    // top entry changed (e.g. someone else rolled) - selection no longer applies
-    activeEntryId = topEntryId;
-    selectedKeys = new Set();
-  }
+  const topId = diceLog[0]?.id ?? null;
+  if (topId !== diceActiveEntryId) { diceActiveEntryId = topId; diceSelectedKeys = new Set(); }
 
-  log.forEach((entry, entryIdx) => {
+  diceLog.forEach((entry, idx) => {
     const el = document.createElement("div");
     el.className = "entry";
-
-    const isTopEntry = entryIdx === 0;
-    const isOwnEntry = entry.playerId ? entry.playerId === currentPlayerId : !obrReady;
-    const isEditable = isTopEntry && isOwnEntry;
+    const isTop = idx === 0;
+    const isOwn = entry.playerId ? entry.playerId === currentPlayerId : !obrReady;
+    const editable = isTop && isOwn;
 
     const dice = [
       ...entry.poolDice.map((v, i) => ({ v, hunger: false, key: dieKey("pool", i) })),
       ...entry.hungerDice.map((v, i) => ({ v, hunger: true, key: dieKey("hunger", i) })),
     ];
-
-    const shouldAnimate = !seenEntryIds.has(entry.id) || forceAnimateIds.has(entry.id);
+    const shouldAnimate = !diceSeenIds.has(entry.id) || diceForceAnimateIds.has(entry.id);
 
     const diceHtml = dice.map((d, i) => {
       const isTen = d.v === 10;
       const isPairedTen = isTen && entry.pairs > 0;
       const isHungerOne = d.v === 1 && d.hunger;
       const isSuccessDie = d.v >= 6 && !isPairedTen;
-
       const cls = ["die"];
       if (isSuccessDie) cls.push("success");
       if (isPairedTen) cls.push("crit");
       if (isHungerOne) cls.push("hungerone");
-      if (isEditable) cls.push("selectable");
-      if (isEditable && selectedKeys.has(d.key)) cls.push("selected");
+      if (editable) cls.push("selectable");
+      if (editable && diceSelectedKeys.has(d.key)) cls.push("selected");
       if (shouldAnimate) cls.push("die-animate");
-
       const bg = d.hunger ? entry.hungerColorHex : entry.poolColorHex;
-      const delay = shouldAnimate ? ` style="background:${bg};animation-delay:${i * 35}ms"` : ` style="background:${bg}"`;
-      const dataAttrs = isEditable ? ` data-entryid="${entry.id}" data-key="${d.key}"` : "";
-      return `<div class="${cls.join(' ')}"${delay}${dataAttrs}>${d.v}</div>`;
+      const style = shouldAnimate ? ` style="background:${bg};animation-delay:${i * 35}ms"` : ` style="background:${bg}"`;
+      const dataAttrs = editable ? ` data-entryid="${entry.id}" data-key="${d.key}"` : "";
+      return `<div class="${cls.join(' ')}"${style}${dataAttrs}>${d.v}</div>`;
     }).join("");
 
     const tagLabel = entry.outcome ? entry.outcome.replace(" ", "<br>") : "";
     const tallyClass = entry.outcomeClass ? ` ${entry.outcomeClass}` : "";
-    const tallyHtml = `
-      <div class="tally-box${tallyClass}">
-        <div class="tally-number">${entry.successes}</div>
-        ${entry.outcome ? `<div class="tally-tag">${tagLabel}</div>` : ""}
-      </div>`;
+    const tallyHtml = `<div class="tally-box${tallyClass}"><div class="tally-number">${entry.successes}</div>${entry.outcome ? `<div class="tally-tag">${tagLabel}</div>` : ""}</div>`;
 
-    const rerollHtml = isEditable
-      ? `<div class="reroll-bar">
-           <button class="reroll-btn" data-reroll-for="${entry.id}" ${selectedKeys.size === 0 ? "disabled style=\"opacity:0.4;cursor:default;\"" : ""}>
-             Reroll Selected${selectedKeys.size ? ` (${selectedKeys.size})` : ""}
-           </button>
-           <span class="reroll-hint">click dice above to select</span>
-         </div>`
+    const rerollHtml = editable
+      ? `<div class="reroll-bar"><button class="reroll-btn" data-reroll-for="${entry.id}" ${diceSelectedKeys.size === 0 ? "disabled style=\"opacity:0.4;cursor:default;\"" : ""}>Reroll${diceSelectedKeys.size ? ` (${diceSelectedKeys.size})` : ""}</button><span class="reroll-hint">click dice to select</span></div>`
       : "";
 
     el.innerHTML = `
@@ -418,67 +375,394 @@ function render(log) {
         <span class="entry-player" style="color:${entry.playerColor || '#ddd'}">${escapeHtml(entry.playerName)}</span>
         <span class="entry-time">${timeString(entry.timestamp)}</span>
       </div>
-      <div class="entry-body">
-        <div class="dice-row">${diceHtml}</div>
-        ${tallyHtml}
-      </div>
+      <div class="entry-body"><div class="dice-row">${diceHtml}</div>${tallyHtml}</div>
       ${rerollHtml}
     `;
-    logEl.appendChild(el);
-    seenEntryIds.add(entry.id);
+    diceLogEl.appendChild(el);
+    diceSeenIds.add(entry.id);
   });
-
-  forceAnimateIds.clear();
+  diceForceAnimateIds.clear();
 }
 
-// event delegation: clicking a selectable die toggles selection; clicking reroll button rerolls
-logEl.addEventListener("click", (e) => {
+diceLogEl.addEventListener("click", (e) => {
   const rerollBtn = e.target.closest(".reroll-btn[data-reroll-for]");
   if (rerollBtn) {
     const entryId = rerollBtn.dataset.rerollFor;
-    if (entryId === activeEntryId && selectedKeys.size > 0) {
-      rerollSelected(entryId);
-    }
+    if (entryId === diceActiveEntryId && diceSelectedKeys.size > 0) rerollSelected(entryId);
     return;
   }
-
   const dieEl = e.target.closest(".die.selectable[data-key]");
   if (!dieEl) return;
-  if (dieEl.dataset.entryid !== activeEntryId) return;
+  if (dieEl.dataset.entryid !== diceActiveEntryId) return;
   const key = dieEl.dataset.key;
-  if (selectedKeys.has(key)) selectedKeys.delete(key);
-  else selectedKeys.add(key);
-  render(currentLog);
+  if (diceSelectedKeys.has(key)) diceSelectedKeys.delete(key); else diceSelectedKeys.add(key);
+  renderDiceLog();
 });
 
 async function rerollSelected(entryId) {
-  const entry = currentLog.find(e => e.id === entryId);
+  const entry = diceLog.find(e => e.id === entryId);
   if (!entry) return;
-
   const poolDice = [...entry.poolDice];
   const hungerDice = [...entry.hungerDice];
-
-  for (const key of selectedKeys) {
+  for (const key of diceSelectedKeys) {
     const [kind, idxStr] = key.split("-");
     const idx = parseInt(idxStr);
-    if (kind === "pool") poolDice[idx] = rollD10();
-    else if (kind === "hunger") hungerDice[idx] = rollD10();
+    if (kind === "pool") poolDice[idx] = rollD10(); else if (kind === "hunger") hungerDice[idx] = rollD10();
+  }
+  const evalResult = evaluateRoll(poolDice, hungerDice);
+  const updated = { ...entry, poolDice, hungerDice, ...evalResult };
+  diceSelectedKeys = new Set();
+  await updateDiceEntry(updated);
+}
+
+/* ============================= MAIN RESIZER ============================= */
+
+const dicePanelEl = document.getElementById("dicePanel");
+const resizerMainEl = document.getElementById("resizerMain");
+(function initMainResizer() {
+  const key = `${EXT_ID}/dicePanelHeight`;
+  const saved = parseInt(localStorage.getItem(key)) || 320;
+  dicePanelEl.style.height = saved + "px";
+  makeVerticalResizer(resizerMainEl, dicePanelEl, document.getElementById("app"), key, 140, 120);
+})();
+
+/* ============================= TRACKER ============================= */
+
+const trackerPanel = document.getElementById("trackerPanel");
+let playerData = {};
+let npcData = {};
+let collapsedIds = new Set();
+try { collapsedIds = new Set(JSON.parse(localStorage.getItem(`${EXT_ID}/collapsed`) || "[]")); } catch (e) {}
+function saveCollapsed() { localStorage.setItem(`${EXT_ID}/collapsed`, JSON.stringify([...collapsedIds])); }
+
+function defaultTracker(name, color) {
+  return {
+    name, color,
+    healthMax: HEALTH_DEFAULT_MAX, health: Array(HEALTH_DEFAULT_MAX).fill(0),
+    willpowerMax: WILLPOWER_DEFAULT_MAX, willpower: Array(WILLPOWER_DEFAULT_MAX).fill(0),
+    hungerMax: HUNGER_DEFAULT_MAX, hunger: 1,
+    humanityMax: HUMANITY_DEFAULT_MAX,
+    humanity: Array.from({ length: HUMANITY_DEFAULT_MAX }, (_, i) => (i < HUMANITY_DEFAULT_FILLED ? 1 : 0)),
+  };
+}
+function defaultNpc(name) {
+  return {
+    ...defaultTracker(name, "#c9885a"),
+    healthMax: 5, health: Array(5).fill(0),
+    willpowerMax: 3, willpower: Array(3).fill(0),
+    hidden: true,
+    tracks: { health: true, willpower: true, hunger: false, humanity: false },
+  };
+}
+function resizeArray(arr, newLen) {
+  const next = arr.slice(0, newLen);
+  while (next.length < newLen) next.push(0);
+  return next;
+}
+async function persistPlayers() {
+  if (obrReady) { try { await OBR.room.setMetadata({ [PLAYERS_KEY]: playerData }); } catch (e) { console.error(e); } }
+  else localStorage.setItem(`${EXT_ID}/local-players`, JSON.stringify(playerData));
+}
+async function persistNpcs() {
+  if (obrReady) { try { await OBR.room.setMetadata({ [NPCS_KEY]: npcData }); } catch (e) { console.error(e); } }
+  else localStorage.setItem(`${EXT_ID}/local-npcs`, JSON.stringify(npcData));
+}
+function ensurePlayerData(p) {
+  if (!playerData[p.id]) playerData[p.id] = defaultTracker(p.name, p.color);
+  else { playerData[p.id].name = p.name; playerData[p.id].color = p.color; }
+}
+function isGM() { return currentRole === "GM"; }
+function canEditPlayer(playerId) { return isGM() || playerId === currentPlayerId || !obrReady; }
+function canEditNpc() { return isGM() || !obrReady; }
+
+function boxesHtml(kind, entityKind, entityId, arr, editable) {
+  return arr.map((state, i) => {
+    const cls = ["box"]; let symbol = "";
+    if (kind === "health") { if (state === 1) { cls.push("health-superficial"); symbol = "/"; } if (state === 2) { cls.push("health-aggravated"); symbol = "X"; } }
+    else if (kind === "willpower") { if (state === 1) { cls.push("wp-superficial"); symbol = "/"; } if (state === 2) { cls.push("wp-aggravated"); symbol = "X"; } }
+    else if (kind === "humanity") { if (state === 1) cls.push("humanity-filled"); if (state === 2) cls.push("humanity-stain"); }
+    if (editable) cls.push("editable");
+    return `<div class="${cls.join(' ')}" data-action="${kind}" data-entity-kind="${entityKind}" data-entity-id="${entityId}" data-index="${i}">${symbol}</div>`;
+  }).join("");
+}
+function hungerBoxesHtml(entityKind, entityId, hungerVal, hungerMax, editable) {
+  return Array.from({ length: hungerMax }, (_, i) => {
+    const filled = i < hungerVal;
+    const cls = ["box"]; if (filled) cls.push("hunger-filled"); if (editable) cls.push("editable");
+    return `<div class="${cls.join(' ')}" data-action="hunger" data-entity-kind="${entityKind}" data-entity-id="${entityId}" data-index="${i}"></div>`;
+  }).join("");
+}
+function trackBlock(label, kind, entityKind, entityId, data, editable) {
+  if (kind === "hunger") {
+    const maxInput = editable ? `<input type="number" class="max-input" min="1" max="20" value="${data.hungerMax}" data-action="hunger-max" data-entity-kind="${entityKind}" data-entity-id="${entityId}" />` : "";
+    return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${data.hunger}/${data.hungerMax}${maxInput}</span></div><div class="boxes">${hungerBoxesHtml(entityKind, entityId, data.hunger, data.hungerMax, editable)}</div></div>`;
+  }
+  if (kind === "humanity") {
+    const filled = data.humanity.filter(s => s === 1).length;
+    const maxInput = editable ? `<input type="number" class="max-input" min="1" max="20" value="${data.humanityMax}" data-action="humanity-max" data-entity-kind="${entityKind}" data-entity-id="${entityId}" />` : "";
+    return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${filled}/${data.humanityMax}${maxInput}</span></div><div class="boxes">${boxesHtml("humanity", entityKind, entityId, data.humanity, editable)}</div></div>`;
+  }
+  const arr = kind === "health" ? data.health : data.willpower;
+  const max = kind === "health" ? data.healthMax : data.willpowerMax;
+  const remaining = max - arr.filter(s => s > 0).length;
+  const maxInput = editable ? `<input type="number" class="max-input" min="1" max="20" value="${max}" data-action="${kind}-max" data-entity-kind="${entityKind}" data-entity-id="${entityId}" />` : "";
+  return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${remaining}/${max}${maxInput}</span></div><div class="boxes">${boxesHtml(kind, entityKind, entityId, arr, editable)}</div></div>`;
+}
+function summaryLine(data, tracks) {
+  const parts = [];
+  if (tracks.health) parts.push(`HP ${data.healthMax - data.health.filter(s=>s>0).length}/${data.healthMax}`);
+  if (tracks.willpower) parts.push(`WP ${data.willpowerMax - data.willpower.filter(s=>s>0).length}/${data.willpowerMax}`);
+  if (tracks.hunger) parts.push(`Hun ${data.hunger}/${data.hungerMax}`);
+  if (tracks.humanity) parts.push(`Hum ${data.humanity.filter(s=>s===1).length}/${data.humanityMax}`);
+  return parts.join(" · ");
+}
+
+function playerCardHtml(p) {
+  const data = playerData[p.id];
+  if (!data) return "";
+  const editable = canEditPlayer(p.id);
+  const collapsed = collapsedIds.has(`player-${p.id}`);
+  const tracks = { health: true, willpower: true, hunger: true, humanity: true };
+  return `
+    <div class="card">
+      <div class="card-header ${collapsed ? '' : 'has-body'}" data-toggle-collapse="player-${p.id}">
+        <div class="header-left">
+          <span class="chevron">${collapsed ? '▸' : '▾'}</span>
+          <span class="player-name" style="color:${p.color || '#ddd'}">${escapeHtml(p.name)}</span>
+          ${p.role === 'GM' ? '<span class="role-badge">GM</span>' : ''}
+        </div>
+      </div>
+      ${collapsed ? `<div class="collapsed-summary">${summaryLine(data, tracks)}</div>` : `
+        ${trackBlock("Health", "health", "player", p.id, data, editable)}
+        ${trackBlock("Willpower", "willpower", "player", p.id, data, editable)}
+        ${trackBlock("Hunger", "hunger", "player", p.id, data, editable)}
+        ${trackBlock("Humanity", "humanity", "player", p.id, data, editable)}
+      `}
+    </div>`;
+}
+
+function npcCardHtml(id, data, inPartySection) {
+  const gm = isGM();
+  const editable = canEditNpc();
+  const collapsed = collapsedIds.has(`npc-${id}`);
+  const tracks = data.tracks || { health: true, willpower: true, hunger: false, humanity: false };
+  const nameHtml = gm
+    ? `<input type="text" class="npc-name-input" value="${escapeHtml(data.name)}" data-action="npc-name" data-entity-id="${id}" maxlength="40" />`
+    : `<span class="player-name" style="color:${data.color || '#ddd'}">${escapeHtml(data.name)}</span>`;
+  const toggles = gm ? `
+    <div class="track-toggles">
+      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="health" ${tracks.health ? "checked" : ""} /> Health</label>
+      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="willpower" ${tracks.willpower ? "checked" : ""} /> Willpower</label>
+      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="hunger" ${tracks.hunger ? "checked" : ""} /> Hunger</label>
+      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="humanity" ${tracks.humanity ? "checked" : ""} /> Humanity</label>
+    </div>` : "";
+  let body = "";
+  if (tracks.health) body += trackBlock("Health", "health", "npc", id, data, editable);
+  if (tracks.willpower) body += trackBlock("Willpower", "willpower", "npc", id, data, editable);
+  if (tracks.hunger) body += trackBlock("Hunger", "hunger", "npc", id, data, editable);
+  if (tracks.humanity) body += trackBlock("Humanity", "humanity", "npc", id, data, editable);
+
+  return `
+    <div class="card">
+      <div class="card-header ${collapsed ? '' : 'has-body'}">
+        <div class="header-left" data-toggle-collapse="npc-${id}" style="cursor:pointer;flex:1;min-width:0;">
+          <span class="chevron">${collapsed ? '▸' : '▾'}</span>
+          ${nameHtml}
+        </div>
+        ${gm ? `
+          <div class="header-right">
+            <button class="icon-btn ${!data.hidden ? 'active' : ''}" data-action="npc-hide" data-entity-id="${id}" title="${data.hidden ? 'Move to party (visible to players)' : 'Move to NPCs (hide from players)'}">${data.hidden ? '👁' : '✕'}</button>
+            <button class="icon-btn" data-action="npc-delete" data-entity-id="${id}" title="Delete">🗑</button>
+          </div>` : ""}
+      </div>
+      ${collapsed ? `<div class="collapsed-summary">${summaryLine(data, tracks)}</div>` : `${toggles}${body}`}
+    </div>`;
+}
+
+let lastIsGM = null;
+
+function buildTrackerSkeleton() {
+  const gm = isGM();
+  lastIsGM = gm;
+
+  let html = `<div class="section-heading">Party</div>`;
+  html += `<div class="scroll-section" id="partyList" style="flex:${gm ? '0 0 auto' : '1 1 0'};${gm ? ' height:220px;' : ''}"></div>`;
+
+  if (gm) {
+    html += `<div class="resizer" id="resizerTracker"></div>`;
+    html += `<div class="section-heading">NPCs (GM only)</div>`;
+    html += `<div class="add-npc-bar"><input type="text" id="npcNameInput" placeholder="NPC name" maxlength="40" /><button id="addNpcBtn">Add NPC</button></div>`;
+    html += `<div class="scroll-section" id="npcList" style="flex:1 1 0;"></div>`;
   }
 
-  const evalResult = evaluateRoll(poolDice, hungerDice);
-  const updatedEntry = { ...entry, poolDice, hungerDice, ...evalResult };
+  trackerPanel.innerHTML = html;
 
-  selectedKeys = new Set();
-  await updateEntry(updatedEntry);
+  if (gm) {
+    const partyList = document.getElementById("partyList");
+    const savedHeight = parseInt(localStorage.getItem(`${EXT_ID}/partyHeight`));
+    if (savedHeight) partyList.style.height = savedHeight + "px";
+    makeVerticalResizer(document.getElementById("resizerTracker"), partyList, trackerPanel, `${EXT_ID}/partyHeight`, 60, 60);
+  }
 }
 
-function escapeHtml(str) {
-  const div = document.createElement("div");
-  div.textContent = str ?? "";
-  return div.innerHTML;
+function renderTrackerCards() {
+  const gm = isGM();
+  const visiblePlayers = roster.filter(p => gm || p.role !== "GM");
+  const npcEntries = Object.entries(npcData);
+  const partyNpcs = npcEntries.filter(([id, d]) => !d.hidden);
+  const hiddenNpcs = npcEntries.filter(([id, d]) => d.hidden);
+
+  const partyList = document.getElementById("partyList");
+  if (partyList) {
+    if (visiblePlayers.length === 0 && partyNpcs.length === 0) {
+      partyList.innerHTML = `<div class="empty-state">No one here yet.</div>`;
+    } else {
+      partyList.innerHTML = visiblePlayers.map(playerCardHtml).join("") + partyNpcs.map(([id, data]) => npcCardHtml(id, data, true)).join("");
+    }
+  }
+
+  const npcList = document.getElementById("npcList");
+  if (npcList) {
+    npcList.innerHTML = hiddenNpcs.length === 0 ? `<div class="empty-state">No NPCs yet.</div>` : hiddenNpcs.map(([id, data]) => npcCardHtml(id, data, false)).join("");
+  }
 }
 
-// --- init / OBR wiring ---
+function renderTracker() {
+  if (isGM() !== lastIsGM) buildTrackerSkeleton();
+  renderTrackerCards();
+}
+
+function makeVerticalResizer(resizerEl, prevEl, containerEl, storageKey, minPrev, minNext) {
+  if (!resizerEl || !prevEl) return;
+  let dragging = false, startY = 0, startH = 0;
+
+  function start(clientY) {
+    dragging = true;
+    startY = clientY;
+    startH = prevEl.getBoundingClientRect().height;
+    resizerEl.classList.add("dragging");
+  }
+  function move(clientY) {
+    if (!dragging) return;
+    const dy = clientY - startY;
+    const containerH = containerEl.getBoundingClientRect().height;
+    let newH = startH + dy;
+    newH = Math.max(minPrev, Math.min(containerH - minNext - resizerEl.offsetHeight, newH));
+    prevEl.style.height = newH + "px";
+  }
+  function end() {
+    if (!dragging) return;
+    dragging = false;
+    resizerEl.classList.remove("dragging");
+    localStorage.setItem(storageKey, Math.round(prevEl.getBoundingClientRect().height));
+  }
+
+  resizerEl.addEventListener("mousedown", (e) => { start(e.clientY); e.preventDefault(); });
+  window.addEventListener("mousemove", (e) => move(e.clientY));
+  window.addEventListener("mouseup", end);
+
+  resizerEl.addEventListener("touchstart", (e) => { start(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+  window.addEventListener("touchmove", (e) => { if (dragging) { move(e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+  window.addEventListener("touchend", end);
+}
+
+trackerPanel.addEventListener("click", async (e) => {
+  const collapseTarget = e.target.closest("[data-toggle-collapse]");
+  if (collapseTarget && !e.target.closest(".npc-name-input")) {
+    const key = collapseTarget.dataset.toggleCollapse;
+    if (collapsedIds.has(key)) collapsedIds.delete(key); else collapsedIds.add(key);
+    saveCollapsed(); renderTracker(); return;
+  }
+  const npcHide = e.target.closest("[data-action='npc-hide']");
+  if (npcHide) {
+    const id = npcHide.dataset.entityId;
+    if (npcData[id] && canEditNpc()) { npcData[id].hidden = !npcData[id].hidden; renderTracker(); await persistNpcs(); }
+    return;
+  }
+  const npcDelete = e.target.closest("[data-action='npc-delete']");
+  if (npcDelete) {
+    const id = npcDelete.dataset.entityId;
+    if (npcData[id] && canEditNpc()) { delete npcData[id]; renderTracker(); await persistNpcs(); }
+    return;
+  }
+  const addBtn = e.target.closest("#addNpcBtn");
+  if (addBtn) {
+    const input = document.getElementById("npcNameInput");
+    const name = (input?.value || "").trim() || "New NPC";
+    const id = `npc_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+    npcData[id] = defaultNpc(name);
+    renderTracker(); await persistNpcs(); return;
+  }
+  const box = e.target.closest(".box.editable[data-action]");
+  if (box) {
+    const action = box.dataset.action;
+    const entityKind = box.dataset.entityKind;
+    const entityId = box.dataset.entityId;
+    const index = parseInt(box.dataset.index);
+    const data = entityKind === "player" ? playerData[entityId] : npcData[entityId];
+    const editable = entityKind === "player" ? canEditPlayer(entityId) : canEditNpc();
+    if (!data || !editable) return;
+    if (action === "health") data.health[index] = (data.health[index] + 1) % 3;
+    else if (action === "willpower") data.willpower[index] = (data.willpower[index] + 1) % 3;
+    else if (action === "humanity") data.humanity[index] = (data.humanity[index] + 1) % 3;
+    else if (action === "hunger") { data.hunger = (data.hunger === index + 1) ? index : index + 1; data.hunger = Math.max(0, Math.min(data.hungerMax, data.hunger)); }
+    else return;
+    renderTracker();
+    if (entityKind === "player") await persistPlayers(); else await persistNpcs();
+  }
+});
+
+trackerPanel.addEventListener("change", async (e) => {
+  const maxInput = e.target.closest(".max-input[data-action]");
+  if (maxInput) {
+    const action = maxInput.dataset.action;
+    const entityKind = maxInput.dataset.entityKind;
+    const entityId = maxInput.dataset.entityId;
+    const data = entityKind === "player" ? playerData[entityId] : npcData[entityId];
+    const editable = entityKind === "player" ? canEditPlayer(entityId) : canEditNpc();
+    if (!data || !editable) return;
+    let val = parseInt(maxInput.value); if (isNaN(val)) val = 1;
+    val = Math.max(1, Math.min(20, val));
+    if (action === "health-max") { data.healthMax = val; data.health = resizeArray(data.health, val); }
+    else if (action === "willpower-max") { data.willpowerMax = val; data.willpower = resizeArray(data.willpower, val); }
+    else if (action === "hunger-max") { data.hungerMax = val; data.hunger = Math.min(data.hunger, val); }
+    else if (action === "humanity-max") { data.humanityMax = val; data.humanity = resizeArray(data.humanity, val); }
+    renderTracker();
+    if (entityKind === "player") await persistPlayers(); else await persistNpcs();
+    return;
+  }
+  const npcName = e.target.closest(".npc-name-input[data-action='npc-name']");
+  if (npcName) {
+    const id = npcName.dataset.entityId;
+    if (npcData[id] && canEditNpc()) { npcData[id].name = npcName.value.trim() || "NPC"; await persistNpcs(); }
+    return;
+  }
+  const trackToggle = e.target.closest("[data-action='npc-track-toggle']");
+  if (trackToggle) {
+    const id = trackToggle.dataset.entityId;
+    const track = trackToggle.dataset.track;
+    if (npcData[id] && canEditNpc()) {
+      if (!npcData[id].tracks) npcData[id].tracks = { health: true, willpower: true, hunger: false, humanity: false };
+      npcData[id].tracks[track] = trackToggle.checked;
+      renderTracker(); await persistNpcs();
+    }
+    return;
+  }
+});
+
+/* ============================= SHARED INIT ============================= */
+
+async function refreshRoster() {
+  if (!obrReady) return;
+  try {
+    const self = { id: currentPlayerId, name: currentPlayerName, color: currentPlayerColor, role: currentRole };
+    const others = await OBR.party.getPlayers();
+    roster = [self, ...others.map(o => ({ id: o.id, name: o.name, color: o.color, role: o.role }))];
+    roster.forEach(ensurePlayerData);
+    renderTracker();
+  } catch (e) { console.error("Failed to refresh roster", e); }
+}
+
 async function init() {
   try {
     if (OBR.isAvailable) {
@@ -488,33 +772,49 @@ async function init() {
           currentPlayerId = await OBR.player.getId();
           currentPlayerName = await OBR.player.getName();
           currentPlayerColor = await OBR.player.getColor();
+          currentRole = await OBR.player.getRole();
         } catch (e) {}
 
         try {
           const metadata = await OBR.room.getMetadata();
-          currentLog = metadata[META_KEY] || [];
-        } catch (e) {
-          currentLog = [];
-        }
-        render(currentLog);
+          diceLog = metadata[DICE_LOG_KEY] || [];
+          playerData = metadata[PLAYERS_KEY] || {};
+          npcData = metadata[NPCS_KEY] || {};
+        } catch (e) { diceLog = []; playerData = {}; npcData = {}; }
+
+        renderDiceLog();
+        await refreshRoster();
 
         OBR.room.onMetadataChange((metadata) => {
-          currentLog = metadata[META_KEY] || [];
-          render(currentLog);
+          diceLog = metadata[DICE_LOG_KEY] || [];
+          playerData = metadata[PLAYERS_KEY] || {};
+          npcData = metadata[NPCS_KEY] || {};
+          renderDiceLog();
+          renderTracker();
+        });
+        OBR.party.onChange(() => refreshRoster());
+        OBR.player.onChange(async () => {
+          try {
+            currentPlayerName = await OBR.player.getName();
+            currentPlayerColor = await OBR.player.getColor();
+            currentRole = await OBR.player.getRole();
+          } catch (e) {}
+          refreshRoster();
         });
       });
       return;
     }
   } catch (e) {}
 
-  // Fallback: running outside Owlbear Rodeo (e.g. local testing)
   obrReady = false;
-  try {
-    currentLog = JSON.parse(localStorage.getItem(`${EXT_ID}/local-log`) || "[]");
-  } catch (e) {
-    currentLog = [];
-  }
-  render(currentLog);
+  try { diceLog = JSON.parse(localStorage.getItem(`${EXT_ID}/local-dicelog`) || "[]"); } catch (e) { diceLog = []; }
+  try { playerData = JSON.parse(localStorage.getItem(`${EXT_ID}/local-players`) || "{}"); } catch (e) { playerData = {}; }
+  try { npcData = JSON.parse(localStorage.getItem(`${EXT_ID}/local-npcs`) || "{}"); } catch (e) { npcData = {}; }
+  currentPlayerId = "local"; currentPlayerName = "You"; currentRole = "GM";
+  roster = [{ id: "local", name: "You", color: "#888888", role: "GM" }];
+  roster.forEach(ensurePlayerData);
+  renderDiceLog();
+  renderTracker();
 }
 
 init();
