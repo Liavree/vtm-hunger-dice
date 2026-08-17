@@ -1,14 +1,14 @@
 {
-  "name": "VtM Hunger Dice",
-  "version": "1.0.0",
+  "name": "VtM Toolkit",
+  "version": "2.0.0",
   "manifest_version": 1,
-  "author": "Your Name",
-  "description": "VtM dice pool roller with regular + hunger dice, synced roll log, and automatic success/crit/messy crit detection.",
+  "author": "Liavre",
+  "description": "VtM dice pool roller plus a party Health/Willpower/Hunger/Humanity tracker with GM-managed NPCs.",
   "action": {
-    "title": "VtM Dice",
+    "title": "VtM Toolkit",
     "icon": "/vtm-hunger-dice/icon.svg",
     "popover": "/vtm-hunger-dice/index.html",
-    "height": 640,
-    "width": 380
+    "height": 780,
+    "width": 420
   }
 }
