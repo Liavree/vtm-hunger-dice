@@ -124,6 +124,7 @@
   .tally-box.crit { border-color: #f2c14e; } .tally-box.crit .tally-number, .tally-box.crit .tally-tag { color: #f2c14e; }
   .tally-box.messy { border-color: #f2895f; } .tally-box.messy .tally-number, .tally-box.messy .tally-tag { color: #f2895f; }
   .tally-box.bestial { border-color: #e35b5b; } .tally-box.bestial .tally-number, .tally-box.bestial .tally-tag { color: #e35b5b; }
+  .tally-box.pass { border-color: #3fae5c; } .tally-box.pass .tally-number, .tally-box.pass .tally-tag { color: #3fae5c; }
   .reroll-bar { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
   .reroll-btn { padding: 5px 10px; border-radius: 6px; border: 1px solid #4da6ff; background: rgba(77,166,255,0.12); color: #bfe0ff; font-size: 11px; font-weight: 600; cursor: pointer; }
   .reroll-hint { color: var(--muted); font-size: 10.5px; }
@@ -210,7 +211,7 @@
             </div>
           </div>
         </div>
-        <button class="rouse-btn" id="rouseBtn">ROUSE<span class="rouse-result" id="rouseResult"></span></button>
+        <button class="rouse-btn" id="rouseBtn">ROUSE</button>
       </div>
       <button class="roll-btn" id="rollBtn">ROLL POOL</button>
     </div>
@@ -261,7 +262,6 @@ const diceLogEl = document.getElementById("diceLog");
 const diceEmptyState = document.getElementById("diceEmptyState");
 const clearLogBtn = document.getElementById("clearLog");
 const rouseBtn = document.getElementById("rouseBtn");
-const rouseResultEl = document.getElementById("rouseResult");
 
 function loadPrefs() {
   try {
@@ -301,18 +301,22 @@ hungerColorInput.onchange = () => { savePrefs(); renderDiceLog(); };
 
 function rollD10() { return Math.floor(Math.random() * 10) + 1; }
 
-let rouseTimeout = null;
-rouseBtn.onclick = () => {
+rouseBtn.onclick = async () => {
   const roll = rollD10();
-  if (roll <= 5) {
+  const gained = roll <= 5;
+  if (gained) {
     hungerInput.value = Math.min(5, (parseInt(hungerInput.value) || 0) + 1);
     clampDiceInputs();
-    rouseResultEl.textContent = `${roll} · +1 Hunger`;
-  } else {
-    rouseResultEl.textContent = `${roll} · Pass`;
   }
-  clearTimeout(rouseTimeout);
-  rouseTimeout = setTimeout(() => { rouseResultEl.textContent = ""; }, 4000);
+  const entry = {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    kind: "rouse",
+    playerId: currentPlayerId, playerName: currentPlayerName, playerColor: currentPlayerColor,
+    roll, gained,
+    hungerColorHex: hungerColorInput.value,
+    timestamp: Date.now(),
+  };
+  await pushDiceEntry(entry);
 };
 
 function evaluateRoll(poolDice, hungerDice) {
@@ -396,6 +400,28 @@ function renderDiceLog() {
   diceLog.forEach((entry, idx) => {
     const el = document.createElement("div");
     el.className = "entry";
+    const shouldAnimate = !diceSeenIds.has(entry.id) || diceForceAnimateIds.has(entry.id);
+
+    if (entry.kind === "rouse") {
+      const cls = ["die"];
+      if (shouldAnimate) cls.push("die-animate");
+      const style = shouldAnimate ? ` style="background:${entry.hungerColorHex};animation-delay:0ms"` : ` style="background:${entry.hungerColorHex}"`;
+      const tallyClass = entry.gained ? "bestial" : "pass";
+      el.innerHTML = `
+        <div class="entry-header">
+          <span class="entry-player" style="color:${entry.playerColor || '#ddd'}">${escapeHtml(entry.playerName)}</span>
+          <span class="entry-time">${timeString(entry.timestamp)}</span>
+        </div>
+        <div class="entry-body">
+          <div class="dice-row"><div class="${cls.join(' ')}"${style}>${entry.roll}</div></div>
+          <div class="tally-box ${tallyClass}"><div class="tally-tag">ROUSE<br>${entry.gained ? "+1 HUNGER" : "PASS"}</div></div>
+        </div>
+      `;
+      diceLogEl.appendChild(el);
+      diceSeenIds.add(entry.id);
+      return;
+    }
+
     const isTop = idx === 0;
     const isOwn = entry.playerId ? entry.playerId === currentPlayerId : !obrReady;
     const editable = isTop && isOwn;
@@ -404,7 +430,6 @@ function renderDiceLog() {
       ...entry.poolDice.map((v, i) => ({ v, hunger: false, key: dieKey("pool", i) })),
       ...entry.hungerDice.map((v, i) => ({ v, hunger: true, key: dieKey("hunger", i) })),
     ];
-    const shouldAnimate = !diceSeenIds.has(entry.id) || diceForceAnimateIds.has(entry.id);
 
     const diceHtml = dice.map((d, i) => {
       const isTen = d.v === 10;
