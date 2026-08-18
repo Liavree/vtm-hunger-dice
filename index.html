@@ -46,21 +46,28 @@
   .resizer:hover, .resizer.dragging { background: #3a3a42; }
   .resizer:hover::after, .resizer.dragging::after { background: #7a7a86; }
 
-  .resize-grip {
-    flex-shrink: 0; height: 12px; background: var(--panel); border-top: 1px solid var(--border);
-    cursor: ns-resize; display: flex; align-items: center; justify-content: center; touch-action: none;
-    position: relative;
+  .resize-bar {
+    flex-shrink: 0; background: var(--panel); border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center; padding: 4px 8px; gap: 8px;
   }
-  .resize-grip::after { content: ""; width: 36px; height: 4px; border-radius: 2px; background: #55555f; }
-  .resize-grip:hover, .resize-grip.dragging { background: #26262b; }
-  .resize-grip:hover::after, .resize-grip.dragging::after { background: #8a8a96; }
-  .resize-grip-label {
-    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-    background: #141416; border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px;
-    font-size: 10.5px; color: var(--muted); white-space: nowrap; display: none;
+  .gear-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 6px;
+    width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+    font-size: 13px; cursor: pointer; padding: 0; flex-shrink: 0;
   }
-  .resize-grip.dragging .resize-grip-label { display: block; }
-
+  .gear-btn:hover { color: var(--text); border-color: #55555f; }
+  .resize-input-row { display: none; align-items: center; gap: 6px; }
+  .resize-input-row.open { display: flex; }
+  .resize-input-row input[type=number] {
+    width: 64px; background: #141416; color: var(--text); border: 1px solid var(--border);
+    border-radius: 5px; padding: 3px 6px; font-size: 12px; text-align: right;
+  }
+  .resize-input-unit { color: var(--muted); font-size: 11px; }
+  .resize-input-row button {
+    background: #2a2a30; border: 1px solid var(--border); color: var(--text); border-radius: 5px;
+    padding: 3px 10px; font-size: 11.5px; cursor: pointer;
+  }
+  .resize-input-row button:hover { background: #35353c; }
   /* ---------- dice panel ---------- */
   .dice-panel { display: flex; flex-direction: column; flex: 0 0 auto; min-height: 140px; }
   .controls { padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
@@ -223,8 +230,13 @@
 
   <div class="tracker-panel" id="trackerPanel"></div>
 
-  <div class="resize-grip" id="resizeGrip" title="Drag to resize window">
-    <span class="resize-grip-label" id="resizeGripLabel"></span>
+  <div class="resize-bar" id="resizeBar">
+    <button class="gear-btn" id="resizeGearBtn" title="Set window height">⚙</button>
+    <div class="resize-input-row" id="resizeInputRow">
+      <input type="number" id="resizeHeightInput" min="300" max="2000" step="10" />
+      <span class="resize-input-unit">px</span>
+      <button id="resizeApplyBtn">Set</button>
+    </div>
   </div>
 </div>
 
@@ -504,47 +516,34 @@ async function rerollSelected(entryId) {
 
 /* ============================= WINDOW RESIZE GRIP ============================= */
 
-const resizeGripEl = document.getElementById("resizeGrip");
-const resizeGripLabelEl = document.getElementById("resizeGripLabel");
-(function initResizeGrip() {
-  let dragging = false, startY = 0, startHeight = 780, pendingHeight = null;
+const resizeGearBtn = document.getElementById("resizeGearBtn");
+const resizeInputRow = document.getElementById("resizeInputRow");
+const resizeHeightInput = document.getElementById("resizeHeightInput");
+const resizeApplyBtn = document.getElementById("resizeApplyBtn");
 
-  async function start(clientY) {
-    if (!obrReady || !OBR.action || typeof OBR.action.getHeight !== "function") return;
-    dragging = true;
-    startY = clientY;
-    pendingHeight = null;
-    try { startHeight = await OBR.action.getHeight(); } catch (e) { startHeight = 780; }
-    resizeGripEl.classList.add("dragging");
-    resizeGripLabelEl.textContent = `${startHeight}px`;
-  }
-  // Only track the target height while dragging — do NOT resize the iframe mid-drag.
-  // Resizing live would shrink/move the iframe out from under the cursor, and since the
-  // mouse would then be outside our iframe's bounds, mouseup would never reach us and
-  // the drag would appear "stuck". We only actually resize once, on release.
-  function move(clientY) {
-    if (!dragging) return;
-    const dy = clientY - startY;
-    pendingHeight = Math.max(300, Math.min(2000, Math.round(startHeight + dy)));
-    resizeGripLabelEl.textContent = `${pendingHeight}px`;
-  }
-  function end() {
-    if (!dragging) return;
-    dragging = false;
-    resizeGripEl.classList.remove("dragging");
-    if (pendingHeight !== null) {
-      OBR.action.setHeight(pendingHeight).catch(() => {});
-      pendingHeight = null;
-    }
-  }
+async function applyResizeHeight() {
+  if (!obrReady || !OBR.action || typeof OBR.action.setHeight !== "function") return;
+  let val = parseInt(resizeHeightInput.value);
+  if (isNaN(val)) return;
+  val = Math.max(300, Math.min(2000, val));
+  await OBR.action.setHeight(val).catch(() => {});
+  resizeInputRow.classList.remove("open");
+}
 
-  resizeGripEl.addEventListener("mousedown", (e) => { start(e.clientY); e.preventDefault(); });
-  window.addEventListener("mousemove", (e) => move(e.clientY));
-  window.addEventListener("mouseup", end);
-  resizeGripEl.addEventListener("touchstart", (e) => { start(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
-  window.addEventListener("touchmove", (e) => { if (dragging) { move(e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
-  window.addEventListener("touchend", end);
-})();
+resizeGearBtn.addEventListener("click", async () => {
+  const isOpen = resizeInputRow.classList.contains("open");
+  if (isOpen) { resizeInputRow.classList.remove("open"); return; }
+  if (obrReady && OBR.action && typeof OBR.action.getHeight === "function") {
+    try { resizeHeightInput.value = await OBR.action.getHeight(); } catch (e) { resizeHeightInput.value = 780; }
+  } else {
+    resizeHeightInput.value = 780;
+  }
+  resizeInputRow.classList.add("open");
+  resizeHeightInput.focus();
+  resizeHeightInput.select();
+});
+resizeApplyBtn.addEventListener("click", applyResizeHeight);
+resizeHeightInput.addEventListener("keydown", (e) => { if (e.key === "Enter") applyResizeHeight(); });
 
 /* ============================= MAIN RESIZER ============================= */
 
