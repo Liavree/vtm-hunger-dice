@@ -49,10 +49,17 @@
   .resize-grip {
     flex-shrink: 0; height: 12px; background: var(--panel); border-top: 1px solid var(--border);
     cursor: ns-resize; display: flex; align-items: center; justify-content: center; touch-action: none;
+    position: relative;
   }
   .resize-grip::after { content: ""; width: 36px; height: 4px; border-radius: 2px; background: #55555f; }
   .resize-grip:hover, .resize-grip.dragging { background: #26262b; }
   .resize-grip:hover::after, .resize-grip.dragging::after { background: #8a8a96; }
+  .resize-grip-label {
+    position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    background: #141416; border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px;
+    font-size: 10.5px; color: var(--muted); white-space: nowrap; display: none;
+  }
+  .resize-grip.dragging .resize-grip-label { display: block; }
 
   /* ---------- dice panel ---------- */
   .dice-panel { display: flex; flex-direction: column; flex: 0 0 auto; min-height: 140px; }
@@ -215,7 +222,9 @@
 
   <div class="tracker-panel" id="trackerPanel"></div>
 
-  <div class="resize-grip" id="resizeGrip" title="Drag to resize window"></div>
+  <div class="resize-grip" id="resizeGrip" title="Drag to resize window">
+    <span class="resize-grip-label" id="resizeGripLabel"></span>
+  </div>
 </div>
 
 <script type="module">
@@ -471,26 +480,37 @@ async function rerollSelected(entryId) {
 /* ============================= WINDOW RESIZE GRIP ============================= */
 
 const resizeGripEl = document.getElementById("resizeGrip");
+const resizeGripLabelEl = document.getElementById("resizeGripLabel");
 (function initResizeGrip() {
-  let dragging = false, startY = 0, startHeight = 780;
+  let dragging = false, startY = 0, startHeight = 780, pendingHeight = null;
 
   async function start(clientY) {
     if (!obrReady || !OBR.action || typeof OBR.action.getHeight !== "function") return;
     dragging = true;
     startY = clientY;
+    pendingHeight = null;
     try { startHeight = await OBR.action.getHeight(); } catch (e) { startHeight = 780; }
     resizeGripEl.classList.add("dragging");
+    resizeGripLabelEl.textContent = `${startHeight}px`;
   }
+  // Only track the target height while dragging — do NOT resize the iframe mid-drag.
+  // Resizing live would shrink/move the iframe out from under the cursor, and since the
+  // mouse would then be outside our iframe's bounds, mouseup would never reach us and
+  // the drag would appear "stuck". We only actually resize once, on release.
   function move(clientY) {
     if (!dragging) return;
     const dy = clientY - startY;
-    const newHeight = Math.max(300, Math.min(2000, Math.round(startHeight + dy)));
-    OBR.action.setHeight(newHeight).catch(() => {});
+    pendingHeight = Math.max(300, Math.min(2000, Math.round(startHeight + dy)));
+    resizeGripLabelEl.textContent = `${pendingHeight}px`;
   }
   function end() {
     if (!dragging) return;
     dragging = false;
     resizeGripEl.classList.remove("dragging");
+    if (pendingHeight !== null) {
+      OBR.action.setHeight(pendingHeight).catch(() => {});
+      pendingHeight = null;
+    }
   }
 
   resizeGripEl.addEventListener("mousedown", (e) => { start(e.clientY); e.preventDefault(); });
