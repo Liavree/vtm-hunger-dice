@@ -46,12 +46,21 @@
   .resizer:hover, .resizer.dragging { background: #3a3a42; }
   .resizer:hover::after, .resizer.dragging::after { background: #7a7a86; }
 
+  .resize-grip {
+    flex-shrink: 0; height: 12px; background: var(--panel); border-top: 1px solid var(--border);
+    cursor: ns-resize; display: flex; align-items: center; justify-content: center; touch-action: none;
+  }
+  .resize-grip::after { content: ""; width: 36px; height: 4px; border-radius: 2px; background: #55555f; }
+  .resize-grip:hover, .resize-grip.dragging { background: #26262b; }
+  .resize-grip:hover::after, .resize-grip.dragging::after { background: #8a8a96; }
+
   /* ---------- dice panel ---------- */
-  .dice-panel { display: flex; flex-direction: column; flex: 0 0 auto; min-height: 140px; border-bottom: none; }
+  .dice-panel { display: flex; flex-direction: column; flex: 0 0 auto; min-height: 140px; }
   .controls { padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--panel); flex-shrink: 0; }
-  .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-  .row:last-child { margin-bottom: 0; }
-  .row label { width: 60px; color: var(--muted); font-size: 12px; }
+  .controls-top { display: flex; gap: 10px; margin-bottom: 6px; }
+  .dice-inputs { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .row { display: flex; align-items: center; gap: 7px; }
+  .row label { width: 44px; color: var(--muted); font-size: 12px; }
   .stepper { display: flex; align-items: center; gap: 4px; flex: 1; }
   .stepper button {
     width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border);
@@ -62,14 +71,23 @@
     width: 40px; text-align: center; background: #141416; color: var(--text);
     border: 1px solid var(--border); border-radius: 4px; padding: 3px 2px;
   }
-  input[type=color] { width: 24px; height: 24px; border: none; border-radius: 4px; padding: 0; background: none; cursor: pointer; }
-  .swatch-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11.5px; }
+  input[type=color] { width: 22px; height: 22px; border: none; border-radius: 5px; padding: 0; background: none; cursor: pointer; flex-shrink: 0; }
+
+  .rouse-btn {
+    width: 66px; flex-shrink: 0; border-radius: 8px; border: 1px solid var(--health);
+    background: #2a1015; color: #f2b18f; font-weight: 700; font-size: 11px; letter-spacing: 0.5px;
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 4px;
+  }
+  .rouse-btn:hover { background: #3a1620; }
+  .rouse-result { font-size: 9px; font-weight: 600; color: var(--muted); min-height: 11px; }
+
   .roll-btn {
-    width: 100%; padding: 8px; margin-top: 4px; border-radius: 6px; border: none;
+    width: 100%; padding: 8px; border-radius: 6px; border: none;
     background: linear-gradient(180deg, #7a1020, #5a0c18); color: #fff; font-weight: 600;
     letter-spacing: 0.5px; cursor: pointer; font-size: 13px;
   }
   .roll-btn:hover { filter: brightness(1.1); }
+
   #diceLog { flex: 1 1 0; min-height: 40px; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column-reverse; gap: 8px; }
   .entry { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
   .entry-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; }
@@ -108,19 +126,18 @@
 
   /* ---------- tracker panel ---------- */
   .tracker-panel { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 120px; }
-  .add-npc-bar { flex-shrink: 0; display: flex; gap: 6px; padding: 6px 12px; }
-  .add-npc-bar input[type=text] { flex: 1; background: #141416; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12.5px; }
-  .add-npc-bar button { background: #2a2a30; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
-  .add-npc-bar button:hover { background: #35353c; }
+  .add-bar { flex-shrink: 0; display: flex; gap: 6px; padding: 6px 12px; }
+  .add-bar input[type=text] { flex: 1; background: #141416; color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12.5px; }
+  .add-bar button { background: #2a2a30; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .add-bar button:hover { background: #35353c; }
 
   .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; margin-bottom: 8px; }
   .card-header { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
   .card-header.has-body { margin-bottom: 7px; }
   .header-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
   .chevron { color: var(--muted); font-size: 10px; flex-shrink: 0; }
-  .player-name { font-weight: 700; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .npc-name-input { font-weight: 700; font-size: 13.5px; background: none; border: none; color: var(--text); border-bottom: 1px dashed var(--border); padding: 0 0 1px; max-width: 150px; }
-  .role-badge { font-size: 9px; color: var(--muted); border: 1px solid var(--border); border-radius: 8px; padding: 1px 6px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0; }
+  .entity-name { font-weight: 700; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .entity-name-input { font-weight: 700; font-size: 13.5px; background: none; border: none; color: var(--text); border-bottom: 1px dashed var(--border); padding: 0 0 1px; max-width: 150px; }
   .header-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
   .icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 5px; width: 21px; height: 21px; display: flex; align-items: center; justify-content: center; font-size: 10.5px; cursor: pointer; padding: 0; }
   .icon-btn:hover { color: var(--text); border-color: #55555f; }
@@ -132,8 +149,8 @@
   .track-row:last-child { margin-bottom: 0; }
   .track-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
   .track-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; }
-  .track-count { color: var(--muted); font-size: 10.5px; }
-  .max-input { width: 30px; background: #141416; color: var(--text); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 10.5px; padding: 1px 2px; margin-left: 4px; }
+  .track-count { color: var(--muted); font-size: 10.5px; display: flex; align-items: center; gap: 3px; }
+  .max-input { width: 30px; background: #141416; color: var(--text); border: 1px solid var(--border); border-radius: 4px; text-align: center; font-size: 10.5px; padding: 1px 2px; }
   .boxes { display: flex; flex-wrap: wrap; gap: 4px; }
   .box { width: 19px; height: 19px; border-radius: 4px; border: 1.5px solid var(--border); background: #141416; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 800; color: transparent; flex-shrink: 0; }
   .box.editable { cursor: pointer; }
@@ -146,29 +163,47 @@
   .box.humanity-filled { background: var(--humanity); border-color: var(--humanity); }
   .box.humanity-stain { background: #141416; border-color: var(--humanity); position: relative; }
   .box.humanity-stain::after { content: ""; position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--humanity); }
+
+  .add-tracker-row { display: flex; gap: 6px; margin-top: 8px; }
+  .add-tracker-row input[type=text] { flex: 1; background: #141416; color: var(--text); border: 1px solid var(--border); border-radius: 5px; padding: 4px 7px; font-size: 11px; }
+  .add-tracker-row button { background: #2a2a30; border: 1px solid var(--border); color: var(--muted); border-radius: 5px; padding: 4px 9px; font-size: 10.5px; cursor: pointer; white-space: nowrap; }
+  .add-tracker-row button:hover { background: #35353c; color: var(--text); }
+
+  .notes-row { margin-top: 8px; }
+  .notes-label { color: var(--muted); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 3px; display: block; }
+  .notes-input {
+    width: 100%; min-height: 40px; resize: vertical; background: #141416; color: var(--text);
+    border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; font-size: 11.5px; font-family: inherit;
+  }
+  .notes-view { color: #cfcfd4; font-size: 11.5px; white-space: pre-wrap; margin-top: 6px; }
 </style>
 </head>
 <body>
 <div id="app">
   <div class="dice-panel" id="dicePanel">
     <div class="controls">
-      <div class="row">
-        <label for="poolInput">Pool</label>
-        <div class="stepper">
-          <button id="poolMinus">−</button>
-          <input id="poolInput" type="number" min="1" max="20" value="5" />
-          <button id="poolPlus">+</button>
+      <div class="controls-top">
+        <div class="dice-inputs">
+          <div class="row">
+            <input id="poolColor" type="color" value="#2b2b2f" title="Pool die color" />
+            <label for="poolInput">Pool</label>
+            <div class="stepper">
+              <button id="poolMinus">−</button>
+              <input id="poolInput" type="number" min="1" max="20" value="5" />
+              <button id="poolPlus">+</button>
+            </div>
+          </div>
+          <div class="row">
+            <input id="hungerColor" type="color" value="#a5192b" title="Hunger die color" />
+            <label for="hungerInput">Hunger</label>
+            <div class="stepper">
+              <button id="hungerMinus">−</button>
+              <input id="hungerInput" type="number" min="0" max="5" value="1" />
+              <button id="hungerPlus">+</button>
+            </div>
+          </div>
         </div>
-        <span class="swatch-label"><input id="poolColor" type="color" value="#2b2b2f" />pool</span>
-      </div>
-      <div class="row">
-        <label for="hungerInput">Hunger</label>
-        <div class="stepper">
-          <button id="hungerMinus">−</button>
-          <input id="hungerInput" type="number" min="0" max="5" value="1" />
-          <button id="hungerPlus">+</button>
-        </div>
-        <span class="swatch-label"><input id="hungerColor" type="color" value="#a5192b" />hunger</span>
+        <button class="rouse-btn" id="rouseBtn">ROUSE<span class="rouse-result" id="rouseResult"></span></button>
       </div>
       <button class="roll-btn" id="rollBtn">ROLL POOL</button>
     </div>
@@ -179,6 +214,8 @@
   <div class="resizer" id="resizerMain"></div>
 
   <div class="tracker-panel" id="trackerPanel"></div>
+
+  <div class="resize-grip" id="resizeGrip" title="Drag to resize window"></div>
 </div>
 
 <script type="module">
@@ -186,8 +223,7 @@ import OBR from "https://esm.sh/@owlbear-rodeo/sdk@2";
 
 const EXT_ID = "com.vtm-toolkit";
 const DICE_LOG_KEY = `${EXT_ID}/dicelog`;
-const PLAYERS_KEY = `${EXT_ID}/players`;
-const NPCS_KEY = `${EXT_ID}/npcs`;
+const PARTY_KEY = `${EXT_ID}/party`;
 const MAX_LOG_ENTRIES = 150;
 
 const HEALTH_DEFAULT_MAX = 7;
@@ -201,7 +237,9 @@ let currentPlayerId = null;
 let currentPlayerName = "You";
 let currentPlayerColor = "#888888";
 let currentRole = "PLAYER";
-let roster = [];
+
+function isGM() { return currentRole === "GM"; }
+function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str ?? ""; return d.innerHTML; }
 
 /* ============================= DICE ROLLER ============================= */
 
@@ -213,6 +251,8 @@ const rollBtn = document.getElementById("rollBtn");
 const diceLogEl = document.getElementById("diceLog");
 const diceEmptyState = document.getElementById("diceEmptyState");
 const clearLogBtn = document.getElementById("clearLog");
+const rouseBtn = document.getElementById("rouseBtn");
+const rouseResultEl = document.getElementById("rouseResult");
 
 function loadPrefs() {
   try {
@@ -251,6 +291,20 @@ poolColorInput.onchange = () => { savePrefs(); renderDiceLog(); };
 hungerColorInput.onchange = () => { savePrefs(); renderDiceLog(); };
 
 function rollD10() { return Math.floor(Math.random() * 10) + 1; }
+
+let rouseTimeout = null;
+rouseBtn.onclick = () => {
+  const roll = rollD10();
+  if (roll <= 5) {
+    hungerInput.value = Math.min(5, (parseInt(hungerInput.value) || 0) + 1);
+    clampDiceInputs();
+    rouseResultEl.textContent = `${roll} · +1 Hunger`;
+  } else {
+    rouseResultEl.textContent = `${roll} · Pass`;
+  }
+  clearTimeout(rouseTimeout);
+  rouseTimeout = setTimeout(() => { rouseResultEl.textContent = ""; }, 4000);
+};
 
 function evaluateRoll(poolDice, hungerDice) {
   const all = [...poolDice, ...hungerDice];
@@ -322,7 +376,6 @@ clearLogBtn.onclick = async () => {
 };
 function timeString(ts) { return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
 function dieKey(kind, idx) { return `${kind}-${idx}`; }
-function escapeHtml(str) { const d = document.createElement("div"); d.textContent = str ?? ""; return d.innerHTML; }
 
 function renderDiceLog() {
   diceLogEl.querySelectorAll(".entry").forEach(el => el.remove());
@@ -415,233 +468,47 @@ async function rerollSelected(entryId) {
   await updateDiceEntry(updated);
 }
 
+/* ============================= WINDOW RESIZE GRIP ============================= */
+
+const resizeGripEl = document.getElementById("resizeGrip");
+(function initResizeGrip() {
+  let dragging = false, startY = 0, startHeight = 780;
+
+  async function start(clientY) {
+    if (!obrReady || !OBR.action || typeof OBR.action.getHeight !== "function") return;
+    dragging = true;
+    startY = clientY;
+    try { startHeight = await OBR.action.getHeight(); } catch (e) { startHeight = 780; }
+    resizeGripEl.classList.add("dragging");
+  }
+  function move(clientY) {
+    if (!dragging) return;
+    const dy = clientY - startY;
+    const newHeight = Math.max(300, Math.min(2000, Math.round(startHeight + dy)));
+    OBR.action.setHeight(newHeight).catch(() => {});
+  }
+  function end() {
+    if (!dragging) return;
+    dragging = false;
+    resizeGripEl.classList.remove("dragging");
+  }
+
+  resizeGripEl.addEventListener("mousedown", (e) => { start(e.clientY); e.preventDefault(); });
+  window.addEventListener("mousemove", (e) => move(e.clientY));
+  window.addEventListener("mouseup", end);
+  resizeGripEl.addEventListener("touchstart", (e) => { start(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+  window.addEventListener("touchmove", (e) => { if (dragging) { move(e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
+  window.addEventListener("touchend", end);
+})();
+
 /* ============================= MAIN RESIZER ============================= */
 
 const dicePanelEl = document.getElementById("dicePanel");
 const resizerMainEl = document.getElementById("resizerMain");
-(function initMainResizer() {
-  const key = `${EXT_ID}/dicePanelHeight`;
-  const saved = parseInt(localStorage.getItem(key)) || 320;
-  dicePanelEl.style.height = saved + "px";
-  makeVerticalResizer(resizerMainEl, dicePanelEl, document.getElementById("app"), key, 140, 120);
-})();
-
-/* ============================= TRACKER ============================= */
-
-const trackerPanel = document.getElementById("trackerPanel");
-let playerData = {};
-let npcData = {};
-let collapsedIds = new Set();
-try { collapsedIds = new Set(JSON.parse(localStorage.getItem(`${EXT_ID}/collapsed`) || "[]")); } catch (e) {}
-function saveCollapsed() { localStorage.setItem(`${EXT_ID}/collapsed`, JSON.stringify([...collapsedIds])); }
-
-function defaultTracker(name, color) {
-  return {
-    name, color,
-    healthMax: HEALTH_DEFAULT_MAX, health: Array(HEALTH_DEFAULT_MAX).fill(0),
-    willpowerMax: WILLPOWER_DEFAULT_MAX, willpower: Array(WILLPOWER_DEFAULT_MAX).fill(0),
-    hungerMax: HUNGER_DEFAULT_MAX, hunger: 1,
-    humanityMax: HUMANITY_DEFAULT_MAX,
-    humanity: Array.from({ length: HUMANITY_DEFAULT_MAX }, (_, i) => (i < HUMANITY_DEFAULT_FILLED ? 1 : 0)),
-  };
-}
-function defaultNpc(name) {
-  return {
-    ...defaultTracker(name, "#c9885a"),
-    healthMax: 5, health: Array(5).fill(0),
-    willpowerMax: 3, willpower: Array(3).fill(0),
-    hidden: true,
-    tracks: { health: true, willpower: true, hunger: false, humanity: false },
-  };
-}
-function resizeArray(arr, newLen) {
-  const next = arr.slice(0, newLen);
-  while (next.length < newLen) next.push(0);
-  return next;
-}
-async function persistPlayers() {
-  if (obrReady) { try { await OBR.room.setMetadata({ [PLAYERS_KEY]: playerData }); } catch (e) { console.error(e); } }
-  else localStorage.setItem(`${EXT_ID}/local-players`, JSON.stringify(playerData));
-}
-async function persistNpcs() {
-  if (obrReady) { try { await OBR.room.setMetadata({ [NPCS_KEY]: npcData }); } catch (e) { console.error(e); } }
-  else localStorage.setItem(`${EXT_ID}/local-npcs`, JSON.stringify(npcData));
-}
-function ensurePlayerData(p) {
-  if (!playerData[p.id]) playerData[p.id] = defaultTracker(p.name, p.color);
-  else { playerData[p.id].name = p.name; playerData[p.id].color = p.color; }
-}
-function isGM() { return currentRole === "GM"; }
-function canEditPlayer(playerId) { return isGM() || playerId === currentPlayerId || !obrReady; }
-function canEditNpc() { return isGM() || !obrReady; }
-
-function boxesHtml(kind, entityKind, entityId, arr, editable) {
-  return arr.map((state, i) => {
-    const cls = ["box"]; let symbol = "";
-    if (kind === "health") { if (state === 1) { cls.push("health-superficial"); symbol = "/"; } if (state === 2) { cls.push("health-aggravated"); symbol = "X"; } }
-    else if (kind === "willpower") { if (state === 1) { cls.push("wp-superficial"); symbol = "/"; } if (state === 2) { cls.push("wp-aggravated"); symbol = "X"; } }
-    else if (kind === "humanity") { if (state === 1) cls.push("humanity-filled"); if (state === 2) cls.push("humanity-stain"); }
-    if (editable) cls.push("editable");
-    return `<div class="${cls.join(' ')}" data-action="${kind}" data-entity-kind="${entityKind}" data-entity-id="${entityId}" data-index="${i}">${symbol}</div>`;
-  }).join("");
-}
-function hungerBoxesHtml(entityKind, entityId, hungerVal, hungerMax, editable) {
-  return Array.from({ length: hungerMax }, (_, i) => {
-    const filled = i < hungerVal;
-    const cls = ["box"]; if (filled) cls.push("hunger-filled"); if (editable) cls.push("editable");
-    return `<div class="${cls.join(' ')}" data-action="hunger" data-entity-kind="${entityKind}" data-entity-id="${entityId}" data-index="${i}"></div>`;
-  }).join("");
-}
-function trackBlock(label, kind, entityKind, entityId, data, editable) {
-  if (kind === "hunger") {
-    const maxInput = editable ? `<input type="number" class="max-input" min="1" max="20" value="${data.hungerMax}" data-action="hunger-max" data-entity-kind="${entityKind}" data-entity-id="${entityId}" />` : "";
-    return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${data.hunger}/${data.hungerMax}${maxInput}</span></div><div class="boxes">${hungerBoxesHtml(entityKind, entityId, data.hunger, data.hungerMax, editable)}</div></div>`;
-  }
-  if (kind === "humanity") {
-    const filled = data.humanity.filter(s => s === 1).length;
-    const maxInput = editable ? `<input type="number" class="max-input" min="1" max="20" value="${data.humanityMax}" data-action="humanity-max" data-entity-kind="${entityKind}" data-entity-id="${entityId}" />` : "";
-    return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${filled}/${data.humanityMax}${maxInput}</span></div><div class="boxes">${boxesHtml("humanity", entityKind, entityId, data.humanity, editable)}</div></div>`;
-  }
-  const arr = kind === "health" ? data.health : data.willpower;
-  const max = kind === "health" ? data.healthMax : data.willpowerMax;
-  const remaining = max - arr.filter(s => s > 0).length;
-  const maxInput = editable ? `<input type="number" class="max-input" min="1" max="20" value="${max}" data-action="${kind}-max" data-entity-kind="${entityKind}" data-entity-id="${entityId}" />` : "";
-  return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${remaining}/${max}${maxInput}</span></div><div class="boxes">${boxesHtml(kind, entityKind, entityId, arr, editable)}</div></div>`;
-}
-function summaryLine(data, tracks) {
-  const parts = [];
-  if (tracks.health) parts.push(`HP ${data.healthMax - data.health.filter(s=>s>0).length}/${data.healthMax}`);
-  if (tracks.willpower) parts.push(`WP ${data.willpowerMax - data.willpower.filter(s=>s>0).length}/${data.willpowerMax}`);
-  if (tracks.hunger) parts.push(`Hun ${data.hunger}/${data.hungerMax}`);
-  if (tracks.humanity) parts.push(`Hum ${data.humanity.filter(s=>s===1).length}/${data.humanityMax}`);
-  return parts.join(" · ");
-}
-
-function playerCardHtml(p) {
-  const data = playerData[p.id];
-  if (!data) return "";
-  const editable = canEditPlayer(p.id);
-  const collapsed = collapsedIds.has(`player-${p.id}`);
-  const tracks = { health: true, willpower: true, hunger: true, humanity: true };
-  return `
-    <div class="card">
-      <div class="card-header ${collapsed ? '' : 'has-body'}" data-toggle-collapse="player-${p.id}">
-        <div class="header-left">
-          <span class="chevron">${collapsed ? '▸' : '▾'}</span>
-          <span class="player-name" style="color:${p.color || '#ddd'}">${escapeHtml(p.name)}</span>
-          ${p.role === 'GM' ? '<span class="role-badge">GM</span>' : ''}
-        </div>
-      </div>
-      ${collapsed ? `<div class="collapsed-summary">${summaryLine(data, tracks)}</div>` : `
-        ${trackBlock("Health", "health", "player", p.id, data, editable)}
-        ${trackBlock("Willpower", "willpower", "player", p.id, data, editable)}
-        ${trackBlock("Hunger", "hunger", "player", p.id, data, editable)}
-        ${trackBlock("Humanity", "humanity", "player", p.id, data, editable)}
-      `}
-    </div>`;
-}
-
-function npcCardHtml(id, data, inPartySection) {
-  const gm = isGM();
-  const editable = canEditNpc();
-  const collapsed = collapsedIds.has(`npc-${id}`);
-  const tracks = data.tracks || { health: true, willpower: true, hunger: false, humanity: false };
-  const nameHtml = gm
-    ? `<input type="text" class="npc-name-input" value="${escapeHtml(data.name)}" data-action="npc-name" data-entity-id="${id}" maxlength="40" />`
-    : `<span class="player-name" style="color:${data.color || '#ddd'}">${escapeHtml(data.name)}</span>`;
-  const toggles = gm ? `
-    <div class="track-toggles">
-      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="health" ${tracks.health ? "checked" : ""} /> Health</label>
-      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="willpower" ${tracks.willpower ? "checked" : ""} /> Willpower</label>
-      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="hunger" ${tracks.hunger ? "checked" : ""} /> Hunger</label>
-      <label><input type="checkbox" data-action="npc-track-toggle" data-entity-id="${id}" data-track="humanity" ${tracks.humanity ? "checked" : ""} /> Humanity</label>
-    </div>` : "";
-  let body = "";
-  if (tracks.health) body += trackBlock("Health", "health", "npc", id, data, editable);
-  if (tracks.willpower) body += trackBlock("Willpower", "willpower", "npc", id, data, editable);
-  if (tracks.hunger) body += trackBlock("Hunger", "hunger", "npc", id, data, editable);
-  if (tracks.humanity) body += trackBlock("Humanity", "humanity", "npc", id, data, editable);
-
-  return `
-    <div class="card">
-      <div class="card-header ${collapsed ? '' : 'has-body'}">
-        <div class="header-left" data-toggle-collapse="npc-${id}" style="cursor:pointer;flex:1;min-width:0;">
-          <span class="chevron">${collapsed ? '▸' : '▾'}</span>
-          ${nameHtml}
-        </div>
-        ${gm ? `
-          <div class="header-right">
-            <button class="icon-btn ${!data.hidden ? 'active' : ''}" data-action="npc-hide" data-entity-id="${id}" title="${data.hidden ? 'Move to party (visible to players)' : 'Move to NPCs (hide from players)'}">${data.hidden ? '👁' : '✕'}</button>
-            <button class="icon-btn" data-action="npc-delete" data-entity-id="${id}" title="Delete">🗑</button>
-          </div>` : ""}
-      </div>
-      ${collapsed ? `<div class="collapsed-summary">${summaryLine(data, tracks)}</div>` : `${toggles}${body}`}
-    </div>`;
-}
-
-let lastIsGM = null;
-
-function buildTrackerSkeleton() {
-  const gm = isGM();
-  lastIsGM = gm;
-
-  let html = `<div class="section-heading">Party</div>`;
-  html += `<div class="scroll-section" id="partyList" style="flex:${gm ? '0 0 auto' : '1 1 0'};${gm ? ' height:220px;' : ''}"></div>`;
-
-  if (gm) {
-    html += `<div class="resizer" id="resizerTracker"></div>`;
-    html += `<div class="section-heading">NPCs (GM only)</div>`;
-    html += `<div class="add-npc-bar"><input type="text" id="npcNameInput" placeholder="NPC name" maxlength="40" /><button id="addNpcBtn">Add NPC</button></div>`;
-    html += `<div class="scroll-section" id="npcList" style="flex:1 1 0;"></div>`;
-  }
-
-  trackerPanel.innerHTML = html;
-
-  if (gm) {
-    const partyList = document.getElementById("partyList");
-    const savedHeight = parseInt(localStorage.getItem(`${EXT_ID}/partyHeight`));
-    if (savedHeight) partyList.style.height = savedHeight + "px";
-    makeVerticalResizer(document.getElementById("resizerTracker"), partyList, trackerPanel, `${EXT_ID}/partyHeight`, 60, 60);
-  }
-}
-
-function renderTrackerCards() {
-  const gm = isGM();
-  const visiblePlayers = roster.filter(p => gm || p.role !== "GM");
-  const npcEntries = Object.entries(npcData);
-  const partyNpcs = npcEntries.filter(([id, d]) => !d.hidden);
-  const hiddenNpcs = npcEntries.filter(([id, d]) => d.hidden);
-
-  const partyList = document.getElementById("partyList");
-  if (partyList) {
-    if (visiblePlayers.length === 0 && partyNpcs.length === 0) {
-      partyList.innerHTML = `<div class="empty-state">No one here yet.</div>`;
-    } else {
-      partyList.innerHTML = visiblePlayers.map(playerCardHtml).join("") + partyNpcs.map(([id, data]) => npcCardHtml(id, data, true)).join("");
-    }
-  }
-
-  const npcList = document.getElementById("npcList");
-  if (npcList) {
-    npcList.innerHTML = hiddenNpcs.length === 0 ? `<div class="empty-state">No NPCs yet.</div>` : hiddenNpcs.map(([id, data]) => npcCardHtml(id, data, false)).join("");
-  }
-}
-
-function renderTracker() {
-  if (isGM() !== lastIsGM) buildTrackerSkeleton();
-  renderTrackerCards();
-}
-
 function makeVerticalResizer(resizerEl, prevEl, containerEl, storageKey, minPrev, minNext) {
   if (!resizerEl || !prevEl) return;
   let dragging = false, startY = 0, startH = 0;
-
-  function start(clientY) {
-    dragging = true;
-    startY = clientY;
-    startH = prevEl.getBoundingClientRect().height;
-    resizerEl.classList.add("dragging");
-  }
+  function start(clientY) { dragging = true; startY = clientY; startH = prevEl.getBoundingClientRect().height; resizerEl.classList.add("dragging"); }
   function move(clientY) {
     if (!dragging) return;
     const dy = clientY - startY;
@@ -656,59 +523,314 @@ function makeVerticalResizer(resizerEl, prevEl, containerEl, storageKey, minPrev
     resizerEl.classList.remove("dragging");
     localStorage.setItem(storageKey, Math.round(prevEl.getBoundingClientRect().height));
   }
-
   resizerEl.addEventListener("mousedown", (e) => { start(e.clientY); e.preventDefault(); });
   window.addEventListener("mousemove", (e) => move(e.clientY));
   window.addEventListener("mouseup", end);
-
   resizerEl.addEventListener("touchstart", (e) => { start(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
   window.addEventListener("touchmove", (e) => { if (dragging) { move(e.touches[0].clientY); e.preventDefault(); } }, { passive: false });
   window.addEventListener("touchend", end);
 }
+(function initMainResizer() {
+  const key = `${EXT_ID}/dicePanelHeight`;
+  const saved = parseInt(localStorage.getItem(key)) || 320;
+  dicePanelEl.style.height = saved + "px";
+  makeVerticalResizer(resizerMainEl, dicePanelEl, document.getElementById("app"), key, 140, 120);
+})();
+
+/* ============================= TRACKER ============================= */
+
+const trackerPanel = document.getElementById("trackerPanel");
+let partyData = {}; // id -> entity, unified Player/NPC store, GM-managed, persists regardless of connection
+let collapsedIds = new Set();
+try { collapsedIds = new Set(JSON.parse(localStorage.getItem(`${EXT_ID}/collapsed`) || "[]")); } catch (e) {}
+function saveCollapsed() { localStorage.setItem(`${EXT_ID}/collapsed`, JSON.stringify([...collapsedIds])); }
+
+function defaultEntity(name, color, hidden) {
+  return {
+    name, color, hidden,
+    healthMax: HEALTH_DEFAULT_MAX, health: Array(HEALTH_DEFAULT_MAX).fill(0),
+    willpowerMax: WILLPOWER_DEFAULT_MAX, willpower: Array(WILLPOWER_DEFAULT_MAX).fill(0),
+    hungerMax: HUNGER_DEFAULT_MAX, hunger: 1,
+    humanityMax: HUMANITY_DEFAULT_MAX,
+    humanity: Array.from({ length: HUMANITY_DEFAULT_MAX }, (_, i) => (i < HUMANITY_DEFAULT_FILLED ? 1 : 0)),
+    tracks: { health: true, willpower: true, hunger: true, humanity: true },
+    customTracks: [],
+    notes: "",
+  };
+}
+function newPlayerEntity(name) {
+  return defaultEntity(name, "#c77dd6", false);
+}
+function newNpcEntity(name) {
+  const e = defaultEntity(name, "#c9885a", true);
+  e.healthMax = 5; e.health = Array(5).fill(0);
+  e.willpowerMax = 3; e.willpower = Array(3).fill(0);
+  e.tracks = { health: true, willpower: true, hunger: false, humanity: false };
+  return e;
+}
+function normalizeEntity(data) {
+  if (!data.tracks) data.tracks = { health: true, willpower: true, hunger: true, humanity: true };
+  if (!data.customTracks) data.customTracks = [];
+  if (data.notes === undefined) data.notes = "";
+  if (data.hungerMax === undefined) data.hungerMax = HUNGER_DEFAULT_MAX;
+  if (data.humanityMax === undefined) data.humanityMax = HUMANITY_DEFAULT_MAX;
+  if (data.hidden === undefined) data.hidden = false;
+  return data;
+}
+function resizeArray(arr, newLen) {
+  const next = arr.slice(0, newLen);
+  while (next.length < newLen) next.push(0);
+  return next;
+}
+async function persistParty() {
+  if (obrReady) { try { await OBR.room.setMetadata({ [PARTY_KEY]: partyData }); } catch (e) { console.error(e); } }
+  else localStorage.setItem(`${EXT_ID}/local-party`, JSON.stringify(partyData));
+}
+
+// Management (rename, hide/unhide, delete, track toggles, max values, custom trackers) is GM-only.
+// Box clicks (marking damage/hunger/etc) are open to anyone in the room for entities currently
+// visible in Party (players don't need the GM to babysit every click); NPCs stay GM-only entirely.
+function canManage() { return isGM() || !obrReady; }
+function canClickBoxes(entity) { return isGM() || !entity.hidden || !obrReady; }
+
+function boxesHtml(kind, entityId, arr, editable) {
+  return arr.map((state, i) => {
+    const cls = ["box"]; let symbol = "";
+    if (kind === "health") { if (state === 1) { cls.push("health-superficial"); symbol = "/"; } if (state === 2) { cls.push("health-aggravated"); symbol = "X"; } }
+    else if (kind === "willpower") { if (state === 1) { cls.push("wp-superficial"); symbol = "/"; } if (state === 2) { cls.push("wp-aggravated"); symbol = "X"; } }
+    else if (kind === "humanity") { if (state === 1) cls.push("humanity-filled"); if (state === 2) cls.push("humanity-stain"); }
+    if (editable) cls.push("editable");
+    return `<div class="${cls.join(' ')}" data-action="${kind}" data-entity-id="${entityId}" data-index="${i}">${symbol}</div>`;
+  }).join("");
+}
+function hungerBoxesHtml(entityId, hungerVal, hungerMax, editable) {
+  return Array.from({ length: hungerMax }, (_, i) => {
+    const filled = i < hungerVal;
+    const cls = ["box"]; if (filled) cls.push("hunger-filled"); if (editable) cls.push("editable");
+    return `<div class="${cls.join(' ')}" data-action="hunger" data-entity-id="${entityId}" data-index="${i}"></div>`;
+  }).join("");
+}
+function trackBlock(label, kind, entityId, data, editable, manageable) {
+  if (kind === "hunger") {
+    const maxInput = manageable ? `<input type="number" class="max-input" min="1" max="20" value="${data.hungerMax}" data-action="hunger-max" data-entity-id="${entityId}" />` : "";
+    return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${data.hunger}/${data.hungerMax}${maxInput}</span></div><div class="boxes">${hungerBoxesHtml(entityId, data.hunger, data.hungerMax, editable)}</div></div>`;
+  }
+  if (kind === "humanity") {
+    const filled = data.humanity.filter(s => s === 1).length;
+    const maxInput = manageable ? `<input type="number" class="max-input" min="1" max="20" value="${data.humanityMax}" data-action="humanity-max" data-entity-id="${entityId}" />` : "";
+    return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${filled}/${data.humanityMax}${maxInput}</span></div><div class="boxes">${boxesHtml("humanity", entityId, data.humanity, editable)}</div></div>`;
+  }
+  const arr = kind === "health" ? data.health : data.willpower;
+  const max = kind === "health" ? data.healthMax : data.willpowerMax;
+  const remaining = max - arr.filter(s => s > 0).length;
+  const maxInput = manageable ? `<input type="number" class="max-input" min="1" max="20" value="${max}" data-action="${kind}-max" data-entity-id="${entityId}" />` : "";
+  return `<div class="track-row"><div class="track-label-row"><span class="track-label">${label}</span><span class="track-count">${remaining}/${max}${maxInput}</span></div><div class="boxes">${boxesHtml(kind, entityId, arr, editable)}</div></div>`;
+}
+function customTrackBoxesHtml(entityId, track, editable) {
+  return Array.from({ length: track.max }, (_, i) => {
+    const filled = i < track.value;
+    const cls = ["box"]; if (filled) cls.push("hunger-filled"); if (editable) cls.push("editable");
+    return `<div class="${cls.join(' ')}" data-action="custom" data-track-id="${track.id}" data-entity-id="${entityId}" data-index="${i}"></div>`;
+  }).join("");
+}
+function customTrackBlock(entityId, track, editable, manageable) {
+  const maxInput = manageable ? `<input type="number" class="max-input" min="1" max="20" value="${track.max}" data-action="custom-max" data-track-id="${track.id}" data-entity-id="${entityId}" />` : "";
+  const deleteBtn = manageable ? `<button class="icon-btn" data-action="custom-delete" data-track-id="${track.id}" data-entity-id="${entityId}" title="Remove tracker" style="margin-left:4px;">×</button>` : "";
+  return `<div class="track-row"><div class="track-label-row"><span class="track-label">${escapeHtml(track.label)}</span><span class="track-count">${track.value}/${track.max}${maxInput}${deleteBtn}</span></div><div class="boxes">${customTrackBoxesHtml(entityId, track, editable)}</div></div>`;
+}
+function trackToggleRowHtml(entityId, tracks) {
+  return `
+    <div class="track-toggles">
+      <label><input type="checkbox" data-action="track-toggle" data-entity-id="${entityId}" data-track="health" ${tracks.health ? "checked" : ""} /> Health</label>
+      <label><input type="checkbox" data-action="track-toggle" data-entity-id="${entityId}" data-track="willpower" ${tracks.willpower ? "checked" : ""} /> Willpower</label>
+      <label><input type="checkbox" data-action="track-toggle" data-entity-id="${entityId}" data-track="hunger" ${tracks.hunger ? "checked" : ""} /> Hunger</label>
+      <label><input type="checkbox" data-action="track-toggle" data-entity-id="${entityId}" data-track="humanity" ${tracks.humanity ? "checked" : ""} /> Humanity</label>
+    </div>`;
+}
+function addTrackerRowHtml(entityId) {
+  return `<div class="add-tracker-row"><input type="text" class="custom-name-input" placeholder="Custom tracker name" data-entity-id="${entityId}" maxlength="30" /><button class="add-tracker-btn" data-entity-id="${entityId}">+ Add</button></div>`;
+}
+function notesHtml(entityId, data, manageable) {
+  if (manageable) {
+    return `<div class="notes-row"><span class="notes-label">Notes</span><textarea class="notes-input" data-action="notes" data-entity-id="${entityId}" placeholder="Status effects, torpor, penalties…" maxlength="500">${escapeHtml(data.notes)}</textarea></div>`;
+  }
+  if (data.notes) {
+    return `<div class="notes-row"><span class="notes-label">Notes</span><div class="notes-view">${escapeHtml(data.notes)}</div></div>`;
+  }
+  return "";
+}
+function summaryLine(data, tracks) {
+  const parts = [];
+  if (tracks.health) parts.push(`HP ${data.healthMax - data.health.filter(s=>s>0).length}/${data.healthMax}`);
+  if (tracks.willpower) parts.push(`WP ${data.willpowerMax - data.willpower.filter(s=>s>0).length}/${data.willpowerMax}`);
+  if (tracks.hunger) parts.push(`Hun ${data.hunger}/${data.hungerMax}`);
+  if (tracks.humanity) parts.push(`Hum ${data.humanity.filter(s=>s===1).length}/${data.humanityMax}`);
+  return parts.join(" · ");
+}
+
+function entityCardHtml(id, data) {
+  const manageable = canManage();
+  const editableBoxes = canClickBoxes(data);
+  const collapsed = collapsedIds.has(`entity-${id}`);
+  const tracks = data.tracks;
+
+  const nameHtml = manageable
+    ? `<input type="text" class="entity-name-input" value="${escapeHtml(data.name)}" data-action="entity-name" data-entity-id="${id}" maxlength="40" />`
+    : `<span class="entity-name" style="color:${data.color || '#ddd'}">${escapeHtml(data.name)}</span>`;
+
+  let body = "";
+  if (tracks.health) body += trackBlock("Health", "health", id, data, editableBoxes, manageable);
+  if (tracks.willpower) body += trackBlock("Willpower", "willpower", id, data, editableBoxes, manageable);
+  if (tracks.hunger) body += trackBlock("Hunger", "hunger", id, data, editableBoxes, manageable);
+  if (tracks.humanity) body += trackBlock("Humanity", "humanity", id, data, editableBoxes, manageable);
+  body += data.customTracks.map(ct => customTrackBlock(id, ct, editableBoxes, manageable)).join("");
+  body += notesHtml(id, data, manageable);
+
+  return `
+    <div class="card">
+      <div class="card-header ${collapsed ? '' : 'has-body'}">
+        <div class="header-left" data-toggle-collapse="entity-${id}" style="cursor:pointer;flex:1;min-width:0;">
+          <span class="chevron">${collapsed ? '▸' : '▾'}</span>
+          ${nameHtml}
+        </div>
+        ${manageable ? `
+          <div class="header-right">
+            <button class="icon-btn ${!data.hidden ? 'active' : ''}" data-action="entity-hide" data-entity-id="${id}" title="${data.hidden ? 'Move to Party (visible to players)' : 'Move to NPCs (hide from players)'}">${data.hidden ? '👁' : '✕'}</button>
+            <button class="icon-btn" data-action="entity-delete" data-entity-id="${id}" title="Delete">🗑</button>
+          </div>` : ""}
+      </div>
+      ${collapsed ? `<div class="collapsed-summary">${summaryLine(data, tracks)}</div>` : `
+        ${manageable ? trackToggleRowHtml(id, tracks) : ""}
+        ${body}
+        ${manageable ? addTrackerRowHtml(id) : ""}
+      `}
+    </div>`;
+}
+
+let lastIsGM = null;
+
+function buildTrackerSkeleton() {
+  const gm = isGM();
+  lastIsGM = gm;
+
+  let html = `<div class="section-heading">Party</div>`;
+  if (gm) html += `<div class="add-bar"><input type="text" id="playerNameInput" placeholder="Player/character name" /><button id="addPlayerBtn">Add Player</button></div>`;
+  html += `<div class="scroll-section" id="partyList" style="flex:${gm ? '0 0 auto' : '1 1 0'};${gm ? ' height:260px;' : ''}"></div>`;
+
+  if (gm) {
+    html += `<div class="resizer" id="resizerTracker"></div>`;
+    html += `<div class="section-heading">NPCs (GM only)</div>`;
+    html += `<div class="add-bar"><input type="text" id="npcNameInput" placeholder="NPC name" /><button id="addNpcBtn">Add NPC</button></div>`;
+    html += `<div class="scroll-section" id="npcList" style="flex:1 1 0;"></div>`;
+  }
+
+  trackerPanel.innerHTML = html;
+
+  if (gm) {
+    const partyList = document.getElementById("partyList");
+    const savedHeight = parseInt(localStorage.getItem(`${EXT_ID}/partyHeight`));
+    if (savedHeight) partyList.style.height = savedHeight + "px";
+    makeVerticalResizer(document.getElementById("resizerTracker"), partyList, trackerPanel, `${EXT_ID}/partyHeight`, 60, 60);
+  }
+}
+
+function renderTrackerCards() {
+  const entries = Object.entries(partyData);
+  const partyEntries = entries.filter(([id, d]) => !d.hidden);
+  const npcEntries = entries.filter(([id, d]) => d.hidden);
+
+  const partyList = document.getElementById("partyList");
+  if (partyList) {
+    partyList.innerHTML = partyEntries.length === 0
+      ? `<div class="empty-state">No one added yet.</div>`
+      : partyEntries.map(([id, data]) => entityCardHtml(id, data)).join("");
+  }
+  const npcList = document.getElementById("npcList");
+  if (npcList) {
+    npcList.innerHTML = npcEntries.length === 0
+      ? `<div class="empty-state">No NPCs yet.</div>`
+      : npcEntries.map(([id, data]) => entityCardHtml(id, data)).join("");
+  }
+}
+
+function renderTracker() {
+  if (isGM() !== lastIsGM) buildTrackerSkeleton();
+  renderTrackerCards();
+}
 
 trackerPanel.addEventListener("click", async (e) => {
   const collapseTarget = e.target.closest("[data-toggle-collapse]");
-  if (collapseTarget && !e.target.closest(".npc-name-input")) {
+  if (collapseTarget && !e.target.closest(".entity-name-input")) {
     const key = collapseTarget.dataset.toggleCollapse;
     if (collapsedIds.has(key)) collapsedIds.delete(key); else collapsedIds.add(key);
     saveCollapsed(); renderTracker(); return;
   }
-  const npcHide = e.target.closest("[data-action='npc-hide']");
-  if (npcHide) {
-    const id = npcHide.dataset.entityId;
-    if (npcData[id] && canEditNpc()) { npcData[id].hidden = !npcData[id].hidden; renderTracker(); await persistNpcs(); }
+  const hideBtn = e.target.closest("[data-action='entity-hide']");
+  if (hideBtn) {
+    const id = hideBtn.dataset.entityId;
+    if (partyData[id] && canManage()) { partyData[id].hidden = !partyData[id].hidden; renderTracker(); await persistParty(); }
     return;
   }
-  const npcDelete = e.target.closest("[data-action='npc-delete']");
-  if (npcDelete) {
-    const id = npcDelete.dataset.entityId;
-    if (npcData[id] && canEditNpc()) { delete npcData[id]; renderTracker(); await persistNpcs(); }
+  const deleteBtn = e.target.closest("[data-action='entity-delete']");
+  if (deleteBtn) {
+    const id = deleteBtn.dataset.entityId;
+    if (partyData[id] && canManage()) { delete partyData[id]; renderTracker(); await persistParty(); }
     return;
   }
-  const addBtn = e.target.closest("#addNpcBtn");
-  if (addBtn) {
+  const addPlayerBtn = e.target.closest("#addPlayerBtn");
+  if (addPlayerBtn) {
+    const input = document.getElementById("playerNameInput");
+    const name = (input?.value || "").trim() || "New Character";
+    const id = `pc_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
+    partyData[id] = newPlayerEntity(name);
+    renderTracker(); await persistParty(); return;
+  }
+  const addNpcBtn = e.target.closest("#addNpcBtn");
+  if (addNpcBtn) {
     const input = document.getElementById("npcNameInput");
     const name = (input?.value || "").trim() || "New NPC";
     const id = `npc_${Date.now()}_${Math.random().toString(36).slice(2,7)}`;
-    npcData[id] = defaultNpc(name);
-    renderTracker(); await persistNpcs(); return;
+    partyData[id] = newNpcEntity(name);
+    renderTracker(); await persistParty(); return;
+  }
+  const addTrackerBtn = e.target.closest(".add-tracker-btn");
+  if (addTrackerBtn) {
+    const entityId = addTrackerBtn.dataset.entityId;
+    const data = partyData[entityId];
+    if (!data || !canManage()) return;
+    const input = addTrackerBtn.parentElement.querySelector(".custom-name-input");
+    const label = (input?.value || "").trim();
+    if (!label) return;
+    data.customTracks.push({ id: `ct_${Date.now()}_${Math.random().toString(36).slice(2,6)}`, label, max: 5, value: 0 });
+    renderTracker(); await persistParty(); return;
+  }
+  const customDelete = e.target.closest("[data-action='custom-delete']");
+  if (customDelete) {
+    const entityId = customDelete.dataset.entityId;
+    const trackId = customDelete.dataset.trackId;
+    const data = partyData[entityId];
+    if (!data || !canManage()) return;
+    data.customTracks = data.customTracks.filter(t => t.id !== trackId);
+    renderTracker(); await persistParty(); return;
   }
   const box = e.target.closest(".box.editable[data-action]");
   if (box) {
     const action = box.dataset.action;
-    const entityKind = box.dataset.entityKind;
     const entityId = box.dataset.entityId;
     const index = parseInt(box.dataset.index);
-    const data = entityKind === "player" ? playerData[entityId] : npcData[entityId];
-    const editable = entityKind === "player" ? canEditPlayer(entityId) : canEditNpc();
-    if (!data || !editable) return;
+    const data = partyData[entityId];
+    if (!data || !canClickBoxes(data)) return;
     if (action === "health") data.health[index] = (data.health[index] + 1) % 3;
     else if (action === "willpower") data.willpower[index] = (data.willpower[index] + 1) % 3;
     else if (action === "humanity") data.humanity[index] = (data.humanity[index] + 1) % 3;
     else if (action === "hunger") { data.hunger = (data.hunger === index + 1) ? index : index + 1; data.hunger = Math.max(0, Math.min(data.hungerMax, data.hunger)); }
-    else return;
-    renderTracker();
-    if (entityKind === "player") await persistPlayers(); else await persistNpcs();
+    else if (action === "custom") {
+      const track = data.customTracks.find(t => t.id === box.dataset.trackId);
+      if (!track) return;
+      track.value = (track.value === index + 1) ? index : index + 1;
+      track.value = Math.max(0, Math.min(track.max, track.value));
+    } else return;
+    renderTracker(); await persistParty();
   }
 });
 
@@ -716,52 +838,46 @@ trackerPanel.addEventListener("change", async (e) => {
   const maxInput = e.target.closest(".max-input[data-action]");
   if (maxInput) {
     const action = maxInput.dataset.action;
-    const entityKind = maxInput.dataset.entityKind;
     const entityId = maxInput.dataset.entityId;
-    const data = entityKind === "player" ? playerData[entityId] : npcData[entityId];
-    const editable = entityKind === "player" ? canEditPlayer(entityId) : canEditNpc();
-    if (!data || !editable) return;
+    const data = partyData[entityId];
+    if (!data || !canManage()) return;
     let val = parseInt(maxInput.value); if (isNaN(val)) val = 1;
     val = Math.max(1, Math.min(20, val));
     if (action === "health-max") { data.healthMax = val; data.health = resizeArray(data.health, val); }
     else if (action === "willpower-max") { data.willpowerMax = val; data.willpower = resizeArray(data.willpower, val); }
     else if (action === "hunger-max") { data.hungerMax = val; data.hunger = Math.min(data.hunger, val); }
     else if (action === "humanity-max") { data.humanityMax = val; data.humanity = resizeArray(data.humanity, val); }
-    renderTracker();
-    if (entityKind === "player") await persistPlayers(); else await persistNpcs();
-    return;
-  }
-  const npcName = e.target.closest(".npc-name-input[data-action='npc-name']");
-  if (npcName) {
-    const id = npcName.dataset.entityId;
-    if (npcData[id] && canEditNpc()) { npcData[id].name = npcName.value.trim() || "NPC"; await persistNpcs(); }
-    return;
-  }
-  const trackToggle = e.target.closest("[data-action='npc-track-toggle']");
-  if (trackToggle) {
-    const id = trackToggle.dataset.entityId;
-    const track = trackToggle.dataset.track;
-    if (npcData[id] && canEditNpc()) {
-      if (!npcData[id].tracks) npcData[id].tracks = { health: true, willpower: true, hunger: false, humanity: false };
-      npcData[id].tracks[track] = trackToggle.checked;
-      renderTracker(); await persistNpcs();
+    else if (action === "custom-max") {
+      const track = data.customTracks.find(t => t.id === maxInput.dataset.trackId);
+      if (track) { track.max = val; track.value = Math.min(track.value, val); }
     }
+    renderTracker(); await persistParty(); return;
+  }
+  const nameInput = e.target.closest(".entity-name-input[data-action='entity-name']");
+  if (nameInput) {
+    const id = nameInput.dataset.entityId;
+    if (partyData[id] && canManage()) { partyData[id].name = nameInput.value.trim() || "Unnamed"; await persistParty(); }
+    return;
+  }
+  const notesInput = e.target.closest(".notes-input[data-action='notes']");
+  if (notesInput) {
+    const id = notesInput.dataset.entityId;
+    if (partyData[id] && canManage()) { partyData[id].notes = notesInput.value; await persistParty(); }
+    return;
+  }
+  const trackToggle = e.target.closest("[data-action='track-toggle']");
+  if (trackToggle) {
+    const entityId = trackToggle.dataset.entityId;
+    const track = trackToggle.dataset.track;
+    const data = partyData[entityId];
+    if (!data || !canManage()) return;
+    data.tracks[track] = trackToggle.checked;
+    renderTracker(); await persistParty();
     return;
   }
 });
 
 /* ============================= SHARED INIT ============================= */
-
-async function refreshRoster() {
-  if (!obrReady) return;
-  try {
-    const self = { id: currentPlayerId, name: currentPlayerName, color: currentPlayerColor, role: currentRole };
-    const others = await OBR.party.getPlayers();
-    roster = [self, ...others.map(o => ({ id: o.id, name: o.name, color: o.color, role: o.role }))];
-    roster.forEach(ensurePlayerData);
-    renderTracker();
-  } catch (e) { console.error("Failed to refresh roster", e); }
-}
 
 async function init() {
   try {
@@ -778,28 +894,29 @@ async function init() {
         try {
           const metadata = await OBR.room.getMetadata();
           diceLog = metadata[DICE_LOG_KEY] || [];
-          playerData = metadata[PLAYERS_KEY] || {};
-          npcData = metadata[NPCS_KEY] || {};
-        } catch (e) { diceLog = []; playerData = {}; npcData = {}; }
+          partyData = metadata[PARTY_KEY] || {};
+          Object.values(partyData).forEach(normalizeEntity);
+        } catch (e) { diceLog = []; partyData = {}; }
 
         renderDiceLog();
-        await refreshRoster();
+        renderTracker();
 
         OBR.room.onMetadataChange((metadata) => {
           diceLog = metadata[DICE_LOG_KEY] || [];
-          playerData = metadata[PLAYERS_KEY] || {};
-          npcData = metadata[NPCS_KEY] || {};
+          partyData = metadata[PARTY_KEY] || {};
+          Object.values(partyData).forEach(normalizeEntity);
           renderDiceLog();
           renderTracker();
         });
-        OBR.party.onChange(() => refreshRoster());
         OBR.player.onChange(async () => {
           try {
             currentPlayerName = await OBR.player.getName();
             currentPlayerColor = await OBR.player.getColor();
-            currentRole = await OBR.player.getRole();
+            const newRole = await OBR.player.getRole();
+            const roleChanged = newRole !== currentRole;
+            currentRole = newRole;
+            if (roleChanged) renderTracker();
           } catch (e) {}
-          refreshRoster();
         });
       });
       return;
@@ -808,11 +925,9 @@ async function init() {
 
   obrReady = false;
   try { diceLog = JSON.parse(localStorage.getItem(`${EXT_ID}/local-dicelog`) || "[]"); } catch (e) { diceLog = []; }
-  try { playerData = JSON.parse(localStorage.getItem(`${EXT_ID}/local-players`) || "{}"); } catch (e) { playerData = {}; }
-  try { npcData = JSON.parse(localStorage.getItem(`${EXT_ID}/local-npcs`) || "{}"); } catch (e) { npcData = {}; }
+  try { partyData = JSON.parse(localStorage.getItem(`${EXT_ID}/local-party`) || "{}"); } catch (e) { partyData = {}; }
+  Object.values(partyData).forEach(normalizeEntity);
   currentPlayerId = "local"; currentPlayerName = "You"; currentRole = "GM";
-  roster = [{ id: "local", name: "You", color: "#888888", role: "GM" }];
-  roster.forEach(ensurePlayerData);
   renderDiceLog();
   renderTracker();
 }
