@@ -7,7 +7,7 @@
   "action": {
     "title": "VtM Toolkit",
     "icon": "/vtm-hunger-dice/icon.svg",
-    "popover": "/vtm-hunger-dice/index.html?v=3",
+    "popover": "/vtm-hunger-dice/index.html?v=4",
     "height": 780,
     "width": 420
   }
